@@ -339,7 +339,7 @@ body {
                 
                 <?php
                     if(isset($_SESSION['client']['status'])) {
-                        echo '<li><a href="logout.php">Upload Topic</a></li>';
+                        echo '<li><a href="addtopic.php">Upload Topic</a></li>';
                     }
                 ?>
                 
