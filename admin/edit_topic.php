@@ -35,19 +35,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $topic_title = trim($_POST['topic_title']);
     $project_abstract = trim($_POST['project_abstract']);
     $topic_text = trim($_POST['topic_text']);
+    $status = $_POST['status'];
     
     // Validate input
-    if (!empty($topic_title) && !empty($project_abstract) && !empty($topic_text)) {
-        // Update topic in database
-        $stmt = $link->prepare("UPDATE topics SET topic_title = ?, project_abstract = ?, topic_text = ? WHERE id = ?");
-        $stmt->bind_param("sssi", $topic_title, $project_abstract, $topic_text, $topic_id);
-        
-        if ($stmt->execute()) {
-            $_SESSION['message'] = "Topic updated successfully!";
-            header("location:view_topic.php?id=" . $topic_id);
-            exit();
+    if (!empty($topic_title) && !empty($project_abstract) && !empty($topic_text) && !empty($status)) {
+        // Validate status value
+        $valid_statuses = ['available', 'taken', 'completed'];
+        if (in_array($status, $valid_statuses)) {
+            // Update topic in database
+            $stmt = $link->prepare("UPDATE topics SET topic_title = ?, project_abstract = ?, topic_text = ?, status = ? WHERE id = ?");
+            $stmt->bind_param("ssssi", $topic_title, $project_abstract, $topic_text, $status, $topic_id);
+            
+            if ($stmt->execute()) {
+                $_SESSION['message'] = "Topic updated successfully!";
+                header("location:view_topic.php?id=" . $topic_id);
+                exit();
+            } else {
+                $_SESSION['error'] = "Error updating topic. Please try again.";
+            }
         } else {
-            $_SESSION['error'] = "Error updating topic. Please try again.";
+            $_SESSION['error'] = "Invalid status value.";
         }
     } else {
         $_SESSION['error'] = "All fields are required.";
@@ -336,6 +343,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             min-height: 150px;
             resize: vertical;
         }
+        
+        .select-wrapper {
+            position: relative;
+        }
+        
+        .select-wrapper::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--gray-600);
+        }
 
         /* Actions */
         .actions {
@@ -486,7 +509,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <header class="admin-header">
             <div class="header-title">
                 <h1>Edit Topic</h1>
-                <p>Modify project topic details</p>
+                <p>Modify project topic details and status</p>
             </div>
             
             <div class="user-info">
@@ -529,13 +552,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="edit-topic-form">
                 <div class="form-header">
                     <h2>Edit Project Topic</h2>
-                    <p>Modify the details for this project topic</p>
+                    <p>Modify the details and status for this project topic</p>
                 </div>
                 
                 <form method="POST" action="">
                     <div class="form-group">
                         <label for="topic_title">Topic Title</label>
                         <input type="text" id="topic_title" name="topic_title" class="form-control" placeholder="Enter topic title" value="<?php echo htmlspecialchars($topic['topic_title']); ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <div class="select-wrapper">
+                            <select id="status" name="status" class="form-control">
+                                <option value="available" <?php echo ($topic['status'] == 'available') ? 'selected' : ''; ?>>Available</option>
+                                <option value="taken" <?php echo ($topic['status'] == 'taken') ? 'selected' : ''; ?>>Taken</option>
+                                <option value="completed" <?php echo ($topic['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="form-group">

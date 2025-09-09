@@ -393,17 +393,17 @@ session_start();
             <div class="info-card">
                 <i class="fas fa-map-marker-alt"></i>
                 <h3>Location</h3>
-                <p>Kano State Polytechnic<br>Rimi GRA, Kano</p>
+                <p>Kano State <br> Polytechnic<br>Matan fada, Kano</p>
             </div>
             <div class="info-card">
                 <i class="fas fa-phone"></i>
                 <h3>Phone</h3>
-                <p>+234 123 456 7890<br>Mon-Fri, 8:00-16:00</p>
+                <p>+234 816 792 8397<br>Mon-Fri, 8:00-16:00</p>
             </div>
             <div class="info-card">
                 <i class="fas fa-envelope"></i>
                 <h3>Email</h3>
-                <p>info@ksp.edu.ng<br>support@ksp.edu.ng</p>
+                <p>info@kanopoly.edu.ng</p>
             </div>
         </div>
         

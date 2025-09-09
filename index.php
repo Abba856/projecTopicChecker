@@ -305,6 +305,20 @@ include("includes/header.php");
             </div>
         </div>
         
+        <?php if(isset($_SESSION['client']['status'])): ?>
+        <div style="text-align: center; margin: 30px 0;">
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <a href="addtopic.php" class="btn-primary" style="display: inline-block; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-size: 18px; font-weight: 600;">
+                    <i class="fas fa-plus-circle"></i> Submit Your Project Topic
+                </a>
+                <a href="user_topics.php" style="display: inline-block; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-size: 18px; font-weight: 600; background: #f1f5f9; color: #2c3e50; border: 1px solid #e2e8f0;">
+                    <i class="fas fa-book"></i> View My Topics
+                </a>
+            </div>
+            <p style="margin-top: 15px; color: #666;">Share your project ideas or view your submissions</p>
+        </div>
+        <?php endif; ?>
+        
         <div class="featured-section">
             <h2 class="featured-title">Featured Project Topics</h2>
             <p class="featured-text">Discover the most popular and trending project topics selected by our academic advisors. These topics are in high demand and offer excellent learning opportunities.</p>

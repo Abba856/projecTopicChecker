@@ -15,13 +15,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $topic_title = isset($_POST['topic_title']) ? trim($_POST['topic_title']) : '';
     $topic_text = isset($_POST['topic_text']) ? trim($_POST['topic_text']) : '';
     $project_abstract = isset($_POST['project_abstract']) ? trim($_POST['project_abstract']) : '';
-    $status = isset($_POST['status']) ? $_POST['status'] : 'available';
     
     // Validate input
     if (!empty($topic_title) && !empty($project_abstract)) {
         // Use prepared statement to prevent SQL injection
-        $stmt = $link->prepare("INSERT INTO topics (topic_title, comment, project_abstract, status) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $topic_title, $topic_text, $project_abstract, $status);
+        // Set default status to 'available' for new topics
+        $status = 'available';
+        $user_id = $_SESSION['client']['id']; // Get user ID from session
+        $stmt = $link->prepare("INSERT INTO topics (topic_title, comment, project_abstract, status, user_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssi", $topic_title, $topic_text, $project_abstract, $status, $user_id);
         
         if ($stmt->execute()) {
             $success_message = "Topic added successfully!";
@@ -127,27 +129,6 @@ textarea.form-control {
     resize: vertical;
 }
 
-.select-wrapper {
-    position: relative;
-}
-
-.select-wrapper::after {
-    content: "\f078";
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #7f8c8d;
-    pointer-events: none;
-}
-
-.select-wrapper select {
-    appearance: none;
-    background-image: none;
-}
-
 .btn-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -247,20 +228,14 @@ textarea.form-control {
                 <textarea id="project_abstract" name="project_abstract" class="form-control" placeholder="Provide a detailed abstract of the project" required></textarea>
             </div>
             
-            <div class="form-group">
-                <label for="status">Status</label>
-                <div class="select-wrapper">
-                    <select id="status" name="status" class="form-control">
-                        <option value="available">Available</option>
-                        <option value="taken">Taken</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i> Add Topic
+                </button>
+                <a href="user_topics.php" class="btn-primary" style="background: #f1f5f9; color: #2c3e50; border: 1px solid #e2e8f0; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-book"></i> View My Topics
+                </a>
             </div>
-            
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-plus-circle"></i> Add Topic
-            </button>
         </form>
     </div>
 </div><!-- end .main-content -->

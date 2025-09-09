@@ -424,6 +424,17 @@ if (isset($_GET['action'])) {
         .btn-reset:hover {
             background: rgba(59, 130, 246, 0.2);
         }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
 
         .btn-back {
             background: var(--gray-200);
@@ -622,6 +633,10 @@ if (isset($_GET['action'])) {
                 </div>
                 
                 <div class="actions">
+                    <a href="edit_topic.php?id=<?php echo $topic['id']; ?>" class="action-btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Topic
+                    </a>
+                    
                     <?php if ($topic['status'] == 'available'): ?>
                         <a href="?id=<?php echo $topic['id']; ?>&action=accept" class="action-btn btn-accept" onclick="return confirm('Are you sure you want to accept this topic?')">
                             <i class="fas fa-check"></i> Accept Topic
