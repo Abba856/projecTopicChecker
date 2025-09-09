@@ -16,7 +16,7 @@ if (isset($_GET['id'])) {
         mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
-        header("location:contact_view.php");
+        header("location:contact_view_new.php");
     } else {
         // Handle the case where the prepared statement fails
         echo "Failed to delete contact.";

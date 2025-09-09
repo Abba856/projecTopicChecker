@@ -3,7 +3,7 @@
 
     if(! isset($_SESSION['admin']['status']))
     {
-        header("location:login.php");
+        header("location:../login_new.php");
     }
 ?>
 
@@ -157,23 +157,10 @@
                             <a href="#"><i class="fa fa-tags fa-fw"></i> Category<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="category_add.php">Add Category</a>
+                                    <a href="category_add_new.php">Add Category</a>
                                 </li>
                                 <li>
-                                    <a href="category_view.php">View Category</a>
-                                </li>
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
-
-                        <li>
-                            <a href="#"><i class="fa fa-book fa-fw"></i> Book<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="book_add.php">Add Book</a>
-                                </li>
-                                <li>
-                                    <a href="book_view.php">View Book</a>
+                                    <a href="category_view_new.php">View Category</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -183,7 +170,7 @@
                             <a href="#"><i class="fa fa-envelope fa-fw"></i> Contact<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="contact_view.php">View Contact</a>
+                                    <a href="contact_view_new.php">View Contact</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -193,7 +180,7 @@
                             <a href="#"><i class="fa fa-users fa-fw"></i> Users<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="Users_view.php">View Users</a>
+                                    <a href="users.php">View Users</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->

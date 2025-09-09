@@ -226,11 +226,11 @@ body {
 
 .page-container {
     display: flex;
+    flex-direction: column;
     max-width: 1200px;
     margin: 30px auto;
     padding: 0 20px;
     gap: 30px;
-    flex-direction: column;
 }
 
 .main-content {
@@ -238,23 +238,7 @@ body {
     min-width: 0;
 }
 
-.sidebar {
-    width: 320px;
-}
-
 /* Responsive adjustments */
-@media (max-width: 992px) {
-    .page-container {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        margin-top: 30px;
-        position: static;
-    }
-}
-
 @media (max-width: 768px) {
     .logo-section {
         flex-direction: column;
@@ -353,10 +337,6 @@ body {
                         echo '<i class="fas fa-user-circle"></i>';
                         echo 'Hi, ' . htmlspecialchars($_SESSION['client']['unm']);
                         echo '</div>';
-                        echo '<a href="logout.php" class="logout-btn">';
-                        echo '<i class="fas fa-sign-out-alt"></i>';
-                        echo 'Logout';
-                        echo '</a>';
                     } else {
                         echo '<a href="login.php" class="login-btn">';
                         echo '<i class="fas fa-sign-in-alt"></i>';

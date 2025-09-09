@@ -31,7 +31,7 @@ if (!empty($_POST)) {
 
     if (empty($unm) || empty($pwd)) {
         $_SESSION['error'][] = "Please enter both username and password";
-        header("location:login.php");
+        header("location:login_new.php");
         exit();
     } else {
         // Use prepared statement to prevent SQL injection
@@ -47,21 +47,21 @@ if (!empty($_POST)) {
             if (!empty($row) && password_verify($pwd, $row['password'])) {
                 $_SESSION['admin']['username'] = $row['username'];
                 $_SESSION['admin']['status'] = true;
-                header("location:dashboard.php");
+                header("location:dashboard_modern.php");
                 exit();
             } else {
                 $_SESSION['error'][] = "Invalid username or password";
-                header("location:login.php");
+                header("location:login_new.php");
                 exit();
             }
         } else {
             $_SESSION['error'][] = "Error authenticating. Please try again.";
-            header("location:login.php");
+            header("location:login_new.php");
             exit();
         }
     }
 } else {
-    header("location:login.php");
+    header("location:login_new.php");
     exit();
 }
 ?>

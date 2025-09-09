@@ -9,38 +9,91 @@ if (!isset($_SESSION['admin']['status'])) {
 
 include("../includes/connection.php");
 
-// Handle topic actions (accept/reject)
-if (isset($_GET['action']) && isset($_GET['id'])) {
-    $action = $_GET['action'];
-    $topic_id = intval($_GET['id']);
+// Handle PDF download
+if (isset($_GET['download']) && $_GET['download'] == 'pdf') {
+    // Get filter parameters
+    $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
+    $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+    $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
     
-    if ($action == 'accept') {
-        $updateQuery = "UPDATE topics SET status = 'taken' WHERE id = ?";
-        $stmt = $link->prepare($updateQuery);
-        $stmt->bind_param("i", $topic_id);
-        $stmt->execute();
-        $_SESSION['message'] = "Topic accepted successfully!";
-    } elseif ($action == 'reject') {
-        $updateQuery = "UPDATE topics SET status = 'completed' WHERE id = ?";
-        $stmt = $link->prepare($updateQuery);
-        $stmt->bind_param("i", $topic_id);
-        $stmt->execute();
-        $_SESSION['message'] = "Topic rejected successfully!";
-    } elseif ($action == 'reset') {
-        $updateQuery = "UPDATE topics SET status = 'available' WHERE id = ?";
-        $stmt = $link->prepare($updateQuery);
-        $stmt->bind_param("i", $topic_id);
-        $stmt->execute();
-        $_SESSION['message'] = "Topic status reset to pending!";
+    // Build query based on filters
+    $whereClause = "";
+    $params = array();
+    $types = "";
+    
+    if ($statusFilter != 'all') {
+        $whereClause .= "WHERE status = ? ";
+        $params[] = $statusFilter;
+        $types .= "s";
     }
     
-    header("location:topics.php");
+    if (!empty($startDate)) {
+        $whereClause .= ($whereClause ? "AND " : "WHERE ") . "DATE(created_at) >= ? ";
+        $params[] = $startDate;
+        $types .= "s";
+    }
+    
+    if (!empty($endDate)) {
+        $whereClause .= ($whereClause ? "AND " : "WHERE ") . "DATE(created_at) <= ? ";
+        $params[] = $endDate;
+        $types .= "s";
+    }
+    
+    // Get topics data
+    $query = "SELECT * FROM topics " . $whereClause . "ORDER BY created_at DESC";
+    $stmt = $link->prepare($query);
+    
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    // Create CSV content for download
+    $csvContent = "Project Topic Report\n";
+    $csvContent .= "Generated on: " . date('Y-m-d H:i:s') . "\n\n";
+    
+    // Add filter information
+    $statusText = 'All Statuses';
+    if ($statusFilter == 'available') $statusText = 'Pending';
+    if ($statusFilter == 'taken') $statusText = 'Accepted';
+    if ($statusFilter == 'completed') $statusText = 'Rejected';
+    
+    $csvContent .= "Filters Applied:\n";
+    $csvContent .= "Status: " . $statusText . "\n";
+    $csvContent .= "Date Range: " . ($startDate ? $startDate : 'Any') . " to " . ($endDate ? $endDate : 'Any') . "\n\n";
+    
+    // Add header row
+    $csvContent .= "ID,Topic Title,Status,Created Date\n";
+    
+    // Add data rows
+    while ($topic = $result->fetch_assoc()) {
+        $statusText = ucfirst($topic['status']);
+        if ($topic['status'] == 'available') $statusText = 'Pending';
+        if ($topic['status'] == 'taken') $statusText = 'Accepted';
+        if ($topic['status'] == 'completed') $statusText = 'Rejected';
+        
+        $csvContent .= "\"" . $topic['id'] . "\",";
+        $csvContent .= "\"" . str_replace('"', '""', $topic['topic_title']) . "\",";
+        $csvContent .= "\"" . $statusText . "\",";
+        $csvContent .= "\"" . date('M j, Y', strtotime($topic['created_at'])) . "\"\n";
+    }
+    
+    // Set headers for download
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="project_topics_report_' . date('Y-m-d') . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    
+    echo $csvContent;
     exit();
 }
 
-// Get filter parameters
+// Get filter parameters for display
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
-$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
 // Build query based on filters
 $whereClause = "";
@@ -53,40 +106,61 @@ if ($statusFilter != 'all') {
     $types .= "s";
 }
 
-if (!empty($searchTerm)) {
-    $whereClause .= ($whereClause ? "AND " : "WHERE ") . "topic_title LIKE ? ";
-    $params[] = "%" . $searchTerm . "%";
+if (!empty($startDate)) {
+    $whereClause .= ($whereClause ? "AND " : "WHERE ") . "DATE(created_at) >= ? ";
+    $params[] = $startDate;
     $types .= "s";
 }
 
-// Count total records for pagination
-$countQuery = "SELECT COUNT(*) as total FROM topics " . $whereClause;
-$stmt = $link->prepare($countQuery);
+if (!empty($endDate)) {
+    $whereClause .= ($whereClause ? "AND " : "WHERE ") . "DATE(created_at) <= ? ";
+    $params[] = $endDate;
+    $types .= "s";
+}
+
+// Get topics data
+$query = "SELECT * FROM topics " . $whereClause . "ORDER BY created_at DESC";
+$stmt = $link->prepare($query);
 
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
 }
 
 $stmt->execute();
-$countResult = $stmt->get_result();
-$totalRecords = $countResult->fetch_assoc()['total'];
-
-// Pagination
-$recordsPerPage = 10;
-$totalPages = ceil($totalRecords / $recordsPerPage);
-$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$offset = ($currentPage - 1) * $recordsPerPage;
-
-// Get topics with pagination
-$query = "SELECT * FROM topics " . $whereClause . "ORDER BY id DESC LIMIT ? OFFSET ?";
-$params[] = $recordsPerPage;
-$params[] = $offset;
-$types .= "ii";
-
-$stmt = $link->prepare($query);
-$stmt->bind_param($types, ...$params);
-$stmt->execute();
 $result = $stmt->get_result();
+
+// Get statistics
+$totalQuery = "SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as pending,
+    SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as accepted,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as rejected
+    FROM topics " . ($whereClause ? substr($whereClause, 0, strrpos($whereClause, ' ')) : "");
+    
+$totalStmt = $link->prepare($totalQuery);
+
+if (!empty($params) && $whereClause) {
+    // Remove date parameters for statistics query if we have a where clause
+    $statParams = array_slice($params, 0, count($params) - substr_count($whereClause, '?'));
+    $statTypes = substr($types, 0, strlen($types) - substr_count($whereClause, '?'));
+    
+    if (!empty($statParams)) {
+        $totalStmt->bind_param($statTypes, ...$statParams);
+    }
+} else if (empty($whereClause)) {
+    // No filters, get all stats
+    $totalQuery = "SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as accepted,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as rejected
+        FROM topics";
+    $totalStmt = $link->prepare($totalQuery);
+}
+
+$totalStmt->execute();
+$statsResult = $totalStmt->get_result();
+$stats = $statsResult->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -94,7 +168,7 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Topics - Admin Panel</title>
+    <title>Reports - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -305,7 +379,7 @@ $result = $stmt->get_result();
             margin: 0;
         }
 
-        /* Filter and Search */
+        /* Filter Section */
         .filters-section {
             background: white;
             border-radius: 16px;
@@ -316,14 +390,13 @@ $result = $stmt->get_result();
         }
 
         .filter-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            flex-wrap: wrap;
             align-items: end;
         }
 
         .form-group {
-            flex: 1;
             min-width: 200px;
         }
 
@@ -359,6 +432,9 @@ $result = $stmt->get_result();
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-primary {
@@ -378,6 +454,90 @@ $result = $stmt->get_result();
 
         .btn-secondary:hover {
             background: var(--gray-300);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid var(--gray-200);
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.blue {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .stat-icon.green {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .stat-icon.orange {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+
+        .stat-icon.red {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .stat-title {
+            font-size: 1rem;
+            color: var(--gray-600);
+            font-weight: 500;
+            margin: 0 0 10px 0;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            color: var(--gray-800);
         }
 
         /* Table Styles */
@@ -455,123 +615,6 @@ $result = $stmt->get_result();
             color: #1d4ed8;
         }
 
-        .actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .accept-btn {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-        }
-
-        .accept-btn:hover {
-            background: rgba(16, 185, 129, 0.2);
-        }
-
-        .reject-btn {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-        }
-
-        .reject-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        .reset-btn {
-            background: rgba(59, 130, 246, 0.1);
-            color: #1d4ed8;
-        }
-
-        .reset-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
-
-        .view-btn {
-            background: rgba(102, 126, 234, 0.1);
-            color: var(--primary);
-        }
-
-        .view-btn:hover {
-            background: rgba(102, 126, 234, 0.2);
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-
-        .pagination a, .pagination span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .pagination a {
-            background: white;
-            color: var(--gray-800);
-            border: 1px solid var(--gray-300);
-        }
-
-        .pagination a:hover {
-            background: var(--gray-100);
-            border-color: var(--gray-400);
-        }
-
-        .pagination .current {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-        }
-
-        .pagination .disabled {
-            background: var(--gray-100);
-            color: var(--gray-400);
-            border: 1px solid var(--gray-200);
-            cursor: not-allowed;
-        }
-
-        /* Message Styles */
-        .message {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            font-weight: 500;
-        }
-
-        .message.success {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-            border-left: 4px solid #059669;
-        }
-
-        .message.error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border-left: 4px solid #dc2626;
-        }
-
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -601,15 +644,6 @@ $result = $stmt->get_result();
             .main-content {
                 margin-left: 0;
             }
-            
-            .filter-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .form-group {
-                min-width: auto;
-            }
         }
 
         @media (max-width: 768px) {
@@ -627,19 +661,17 @@ $result = $stmt->get_result();
                 gap: 15px;
             }
             
-            th, td {
-                padding: 12px 10px;
-                font-size: 0.9rem;
+            .filter-row {
+                grid-template-columns: 1fr;
             }
             
-            .actions {
+            .filter-buttons {
                 flex-direction: column;
-                gap: 5px;
             }
             
-            .action-btn {
-                width: 30px;
-                height: 30px;
+            .btn {
+                width: 100%;
+                justify-content: center;
             }
         }
 
@@ -652,6 +684,11 @@ $result = $stmt->get_result();
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
+            }
+            
+            th, td {
+                padding: 12px 10px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -669,7 +706,7 @@ $result = $stmt->get_result();
                 <i class="fas fa-home"></i>
                 Dashboard
             </a>
-            <a href="topics.php" class="menu-item active">
+            <a href="topics.php" class="menu-item">
                 <i class="fas fa-book"></i>
                 Manage Topics
             </a>
@@ -681,7 +718,7 @@ $result = $stmt->get_result();
                 <i class="fas fa-envelope"></i>
                 Messages
             </a>
-            <a href="report.php" class="menu-item">
+            <a href="report.php" class="menu-item active">
                 <i class="fas fa-chart-bar"></i>
                 Reports
             </a>
@@ -704,8 +741,8 @@ $result = $stmt->get_result();
         <!-- Header -->
         <header class="admin-header">
             <div class="header-title">
-                <h1>Manage Topics</h1>
-                <p>Review and manage project topics</p>
+                <h1>Reports</h1>
+                <p>Generate and download project topic reports</p>
             </div>
             
             <div class="user-info">
@@ -722,21 +759,8 @@ $result = $stmt->get_result();
         <!-- Dashboard Content -->
         <div class="dashboard-content">
             <div class="page-header">
-                <h1 class="page-title">Project Topics</h1>
+                <h1 class="page-title">Project Topics Report</h1>
             </div>
-
-            <!-- Display Messages -->
-            <?php if (isset($_SESSION['message'])): ?>
-                <div class="message success">
-                    <i class="fas fa-check-circle"></i> <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="message error">
-                    <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                </div>
-            <?php endif; ?>
 
             <!-- Filters Section -->
             <div class="filters-section">
@@ -753,32 +777,70 @@ $result = $stmt->get_result();
                         </div>
                         
                         <div class="form-group">
-                            <label for="search">Search Topics</label>
-                            <input type="text" name="search" id="search" class="form-control" placeholder="Search by title or abstract..." value="<?php echo htmlspecialchars($searchTerm); ?>">
+                            <label for="start_date">Start Date</label>
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo htmlspecialchars($startDate); ?>">
                         </div>
                         
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i> Filter
-                            </button>
-                            <?php if ($statusFilter != 'all' || !empty($searchTerm)): ?>
-                                <a href="topics.php" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Clear
-                                </a>
-                            <?php endif; ?>
-                            <a href="add_topic.php" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add Topic
-                            </a>
+                            <label for="end_date">End Date</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="<?php echo htmlspecialchars($endDate); ?>">
                         </div>
                     </div>
+                    
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <a href="report.php" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                        <button type="submit" name="download" value="pdf" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV Report
+                        </button>
+                    </div>
                 </form>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-title">Total Topics</div>
+                    <div class="stat-value"><?php echo $stats['total'] ?? 0; ?></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-title">Pending</div>
+                    <div class="stat-value"><?php echo $stats['pending'] ?? 0; ?></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-title">Accepted</div>
+                    <div class="stat-value"><?php echo $stats['accepted'] ?? 0; ?></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-title">Rejected</div>
+                    <div class="stat-value"><?php echo $stats['rejected'] ?? 0; ?></div>
+                </div>
             </div>
 
             <!-- Topics Table -->
             <div class="table-container">
                 <div class="table-header">
-                    <h3>All Topics</h3>
-                    <div>Showing <?php echo $result->num_rows; ?> of <?php echo $totalRecords; ?> topics</div>
+                    <h3>Filtered Topics</h3>
+                    <div>Showing <?php echo $result->num_rows; ?> topics</div>
                 </div>
                 
                 <?php if ($result->num_rows > 0): ?>
@@ -789,7 +851,6 @@ $result = $stmt->get_result();
                                 <th>Topic Title</th>
                                 <th>Status</th>
                                 <th>Created Date</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -810,80 +871,15 @@ $result = $stmt->get_result();
                                         </span>
                                     </td>
                                     <td><?php echo date('M j, Y', strtotime($topic['created_at'])); ?></td>
-                                    <td class="actions">
-                                        <a href="view_topic.php?id=<?php echo $topic['id']; ?>" class="action-btn view-btn" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <?php if ($topic['status'] == 'available'): ?>
-                                            <a href="?action=accept&id=<?php echo $topic['id']; ?>" class="action-btn accept-btn" title="Accept Topic" onclick="return confirm('Are you sure you want to accept this topic?')">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                            <a href="?action=reject&id=<?php echo $topic['id']; ?>" class="action-btn reject-btn" title="Reject Topic" onclick="return confirm('Are you sure you want to reject this topic?')">
-                                                <i class="fas fa-times"></i>
-                                            </a>
-                                        <?php elseif ($topic['status'] == 'taken'): ?>
-                                            <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
-                                                <i class="fas fa-undo"></i>
-                                            </a>
-                                        <?php elseif ($topic['status'] == 'completed'): ?>
-                                            <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
-                                                <i class="fas fa-undo"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
-                    
-                    <!-- Pagination -->
-                    <?php if ($totalPages > 1): ?>
-                        <div class="pagination">
-                            <?php if ($currentPage > 1): ?>
-                                <a href="?page=1<?php echo ($statusFilter != 'all') ? '&status=' . $statusFilter : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                    <i class="fas fa-angle-double-left"></i> First
-                                </a>
-                                <a href="?page=<?php echo $currentPage - 1; ?><?php echo ($statusFilter != 'all') ? '&status=' . $statusFilter : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                    <i class="fas fa-angle-left"></i> Previous
-                                </a>
-                            <?php else: ?>
-                                <span class="disabled"><i class="fas fa-angle-double-left"></i> First</span>
-                                <span class="disabled"><i class="fas fa-angle-left"></i> Previous</span>
-                            <?php endif; ?>
-                            
-                            <?php
-                            $startPage = max(1, $currentPage - 2);
-                            $endPage = min($totalPages, $currentPage + 2);
-                            
-                            for ($i = $startPage; $i <= $endPage; $i++):
-                            ?>
-                                <?php if ($i == $currentPage): ?>
-                                    <span class="current"><?php echo $i; ?></span>
-                                <?php else: ?>
-                                    <a href="?page=<?php echo $i; ?><?php echo ($statusFilter != 'all') ? '&status=' . $statusFilter : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                        <?php echo $i; ?>
-                                    </a>
-                                <?php endif; ?>
-                            <?php endfor; ?>
-                            
-                            <?php if ($currentPage < $totalPages): ?>
-                                <a href="?page=<?php echo $currentPage + 1; ?><?php echo ($statusFilter != 'all') ? '&status=' . $statusFilter : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                    Next <i class="fas fa-angle-right"></i>
-                                </a>
-                                <a href="?page=<?php echo $totalPages; ?><?php echo ($statusFilter != 'all') ? '&status=' . $statusFilter : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                    Last <i class="fas fa-angle-double-right"></i>
-                                </a>
-                            <?php else: ?>
-                                <span class="disabled">Next <i class="fas fa-angle-right"></i></span>
-                                <span class="disabled">Last <i class="fas fa-angle-double-right"></i></span>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
                 <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-book"></i>
                         <h3>No Topics Found</h3>
-                        <p>There are no topics matching your current criteria.</p>
+                        <p>There are no topics matching your current filter criteria.</p>
                     </div>
                 <?php endif; ?>
             </div>

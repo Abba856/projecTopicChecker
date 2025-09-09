@@ -5,8 +5,8 @@ include("includes/header.php");
 <style>
 /* Enhanced Modern Homepage Styles */
 .modern-content {
-    float: right;
-    width: 670px;
+    width: 100%;
+    float: none;
 }
 
 .modern-post {
@@ -14,7 +14,7 @@ include("includes/header.php");
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    padding: 30px;
+    padding: 35px;
     position: relative;
     overflow: hidden;
 }
@@ -31,7 +31,7 @@ include("includes/header.php");
 
 .modern-title {
     color: #2c3e50;
-    font-size: 32px;
+    font-size: 34px;
     margin-bottom: 15px;
     font-weight: 700;
     position: relative;
@@ -152,7 +152,7 @@ include("includes/header.php");
     justify-content: space-between;
     background: #f8f9fa;
     border-radius: 12px;
-    padding: 20px;
+    padding: 25px;
     margin: 30px 0;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
 }
@@ -163,14 +163,14 @@ include("includes/header.php");
 }
 
 .stat-number {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: #667eea;
     margin-bottom: 5px;
 }
 
 .stat-label {
-    font-size: 14px;
+    font-size: 15px;
     color: #7f8c8d;
     font-weight: 500;
 }
@@ -186,10 +186,10 @@ include("includes/header.php");
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 14px 35px;
+    padding: 15px 35px;
     border-radius: 50px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     transition: all 0.4s ease;
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
@@ -208,21 +208,21 @@ include("includes/header.php");
 .featured-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 12px;
-    padding: 25px;
+    padding: 30px;
     color: white;
     margin: 30px 0;
     box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
 }
 
 .featured-title {
-    font-size: 22px;
+    font-size: 24px;
     margin-top: 0;
     margin-bottom: 15px;
     font-weight: 600;
 }
 
 .featured-text {
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1.6;
     opacity: 0.9;
     margin-bottom: 0;
@@ -245,17 +245,12 @@ include("includes/header.php");
         grid-template-columns: 1fr;
     }
     
-    .modern-content {
-        width: 100%;
-        float: none;
-    }
-    
     .modern-post {
-        padding: 20px;
+        padding: 25px;
     }
     
     .modern-title {
-        font-size: 28px;
+        font-size: 30px;
     }
 }
 

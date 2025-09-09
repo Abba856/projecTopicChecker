@@ -3,7 +3,7 @@ session_start();
 
 // If already logged in, redirect to dashboard
 if(isset($_SESSION['admin']['status'])) {
-    header("location:dashboard.php");
+    header("location:dashboard_modern.php");
     exit();
 }
 ?>

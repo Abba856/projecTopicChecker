@@ -3,26 +3,24 @@ session_start();
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin']['status'])) {
-    header("location:login.php");
+    header("location:login_new.php");
     exit();
 }
 
 include("../includes/connection.php");
 
-// Handle message actions (delete)
-if (isset($_GET['action']) && isset($_GET['id'])) {
-    $action = $_GET['action'];
-    $message_id = intval($_GET['id']);
-    
-    if ($action == 'delete') {
-        $deleteQuery = "DELETE FROM contact WHERE c_id = ?";
-        $stmt = $link->prepare($deleteQuery);
+// Handle message actions
+if (isset($_GET['action'])) {
+    if ($_GET['action'] == 'delete' && isset($_GET['id'])) {
+        $message_id = intval($_GET['id']);
+        
+        $stmt = $link->prepare("DELETE FROM contact WHERE c_id = ?");
         $stmt->bind_param("i", $message_id);
         $stmt->execute();
         $_SESSION['message'] = "Message deleted successfully!";
-    } elseif ($action == 'delete_all') {
-        $deleteQuery = "DELETE FROM contact";
-        $link->query($deleteQuery);
+    } elseif ($_GET['action'] == 'delete_all') {
+        $stmt = $link->prepare("DELETE FROM contact");
+        $stmt->execute();
         $_SESSION['message'] = "All messages deleted successfully!";
     }
     
@@ -30,17 +28,20 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     exit();
 }
 
-// Get filter parameters
+// Get search parameter
 $searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
 
-// Build query based on filters
+// Build query based on search
 $whereClause = "";
 $params = array();
 $types = "";
 
 if (!empty($searchTerm)) {
-    $whereClause = "WHERE c_nm LIKE ? OR c_email LIKE ? OR c_msg LIKE ?";
-    $params = array("%" . $searchTerm . "%", "%" . $searchTerm . "%", "%" . $searchTerm . "%");
+    $whereClause = "WHERE c_name LIKE ? OR c_email LIKE ? OR c_msg LIKE ?";
+    $searchParam = "%" . $searchTerm . "%";
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
     $types = "sss";
 }
 
@@ -69,9 +70,7 @@ $params[] = $offset;
 $types .= "ii";
 
 $stmt = $link->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -82,9 +81,28 @@ $result = $stmt->get_result();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages - Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8f9fa;
+            --dark: #1e293b;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #718096;
+            --gray-800: #1e293b;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -92,107 +110,134 @@ $result = $stmt->get_result();
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f5f7fa;
-            color: #2c3e50;
-        }
-
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--gray-800);
+            line-height: 1.6;
         }
 
         /* Sidebar Styles */
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            height: 100vh;
+        .admin-sidebar {
             position: fixed;
-            overflow-y: auto;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             transition: all 0.3s ease;
         }
 
         .sidebar-header {
-            padding: 30px 20px;
-            text-align: center;
+            padding: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .sidebar-header h1 {
-            font-size: 22px;
+            font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin: 0;
         }
 
         .sidebar-header p {
-            font-size: 14px;
-            opacity: 0.8;
-            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin: 5px 0 0 0;
         }
 
         .sidebar-menu {
             padding: 20px 0;
         }
 
-        .sidebar-menu ul {
-            list-style: none;
-        }
-
-        .sidebar-menu li {
-            margin-bottom: 5px;
-        }
-
-        .sidebar-menu a {
+        .menu-item {
+            padding: 12px 20px;
             display: flex;
             align-items: center;
-            padding: 15px 25px;
-            color: rgba(255, 255, 255, 0.8);
+            gap: 12px;
             text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
             transition: all 0.3s ease;
-            gap: 15px;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
-        .sidebar-menu a:hover, .sidebar-menu a.active {
+        .menu-item:hover, .menu-item.active {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            border-left: 4px solid #667eea;
+            border-left: 3px solid white;
         }
 
-        .sidebar-menu a.active {
-            background: rgba(102, 126, 234, 0.2);
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .sidebar-menu a i {
-            width: 24px;
+        .menu-item i {
+            width: 20px;
             text-align: center;
-            font-size: 18px;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(0, 0, 0, 0.3);
         }
 
         /* Main Content Styles */
         .main-content {
-            flex: 1;
-            margin-left: 280px;
-            transition: all 0.3s ease;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
         }
 
-        .topbar {
+        .admin-header {
+            height: var(--header-height);
             background: white;
-            padding: 20px 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
         }
 
-        .topbar h2 {
-            color: #2c3e50;
-            font-size: 28px;
+        .header-title h1 {
+            font-size: 1.5rem;
             font-weight: 600;
+            color: var(--gray-800);
+            margin: 0;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin: 3px 0 0 0;
         }
 
         .user-info {
@@ -201,31 +246,30 @@ $result = $stmt->get_result();
             gap: 15px;
         }
 
-        .user-info .avatar {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .user-avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
+            font-weight: 600;
         }
 
-        .user-info .details {
+        .user-details {
             text-align: right;
         }
 
-        .user-info .name {
+        .user-details .name {
             font-weight: 600;
-            color: #2c3e50;
-            font-size: 16px;
+            font-size: 0.95rem;
         }
 
-        .user-info .role {
-            font-size: 14px;
-            color: #7f8c8d;
+        .user-details .role {
+            font-size: 0.85rem;
+            color: var(--gray-600);
         }
 
         /* Dashboard Content */
@@ -240,124 +284,121 @@ $result = $stmt->get_result();
             margin-bottom: 30px;
         }
 
-        .page-header h1 {
-            color: #2c3e50;
-            font-size: 32px;
+        .page-title {
+            font-size: 1.8rem;
             font-weight: 700;
+            color: var(--gray-800);
             margin: 0;
-        }
-
-        .filters {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            align-items: end;
-        }
-
-        .filter-group {
-            flex: 1;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: #2c3e50;
-            font-size: 15px;
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        select, input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e8ed;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background: white;
-            color: #2c3e50;
-        }
-
-        select:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
         }
 
         .btn {
             padding: 12px 20px;
-            border-radius: 10px;
-            border: none;
-            font-size: 15px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
             font-weight: 500;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
         }
 
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #2c3e50;
-            border: 1px solid #dee2e6;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
         }
 
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            font-weight: 500;
+        /* Filter and Search */
+        .filters-section {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 30px;
+        }
+
+        .filter-row {
             display: flex;
-            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-buttons {
+            display: flex;
             gap: 10px;
+            align-items: end;
         }
 
-        .alert-success {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            color: #2e7d32;
-            border-left: 4px solid #2e7d32;
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-            color: #c62828;
-            border-left: 4px solid #c62828;
-        }
-
+        /* Table Styles */
         .table-container {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-200);
             overflow: hidden;
-            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--gray-800);
         }
 
         table {
@@ -366,76 +407,85 @@ $result = $stmt->get_result();
         }
 
         th, td {
-            padding: 18px 20px;
+            padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--gray-200);
         }
 
         th {
-            background: #f8f9fa;
+            background-color: var(--gray-100);
             font-weight: 600;
-            color: #2c3e50;
-            font-size: 15px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            color: var(--gray-800);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
         }
 
         tr:last-child td {
             border-bottom: none;
         }
 
-        tr:hover {
-            background: #f8f9fa;
+        tr:hover td {
+            background-color: var(--gray-100);
         }
 
         .message-preview {
-            max-width: 300px;
-            white-space: nowrap;
+            max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--gray-600);
         }
 
-        .action-buttons {
+        .actions {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
         }
 
         .action-btn {
-            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
             border-radius: 8px;
             text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
             transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: none;
-            cursor: pointer;
         }
 
-        .btn-view {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            color: #1565c0;
+        .view-btn {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
         }
 
-        .btn-delete {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-            color: #c62828;
+        .view-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
         }
 
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 10px;
             margin-top: 30px;
             flex-wrap: wrap;
         }
 
         .pagination a, .pagination span {
-            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 15px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 500;
@@ -444,55 +494,89 @@ $result = $stmt->get_result();
 
         .pagination a {
             background: white;
-            color: #667eea;
-            border: 1px solid #dee2e6;
+            color: var(--gray-800);
+            border: 1px solid var(--gray-300);
         }
 
         .pagination a:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+            background: var(--gray-100);
+            border-color: var(--gray-400);
         }
 
         .pagination .current {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            border: 1px solid #667eea;
+            border: none;
         }
 
         .pagination .disabled {
-            background: #f8f9fa;
-            color: #ccc;
-            border: 1px solid #dee2e6;
+            background: var(--gray-100);
+            color: var(--gray-400);
+            border: 1px solid var(--gray-200);
             cursor: not-allowed;
         }
 
-        /* Responsive */
+        /* Message Styles */
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border-left: 4px solid #059669;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border-left: 4px solid #dc2626;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray-600);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--gray-300);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--gray-800);
+        }
+
+        /* Responsive Design */
         @media (max-width: 992px) {
-            .sidebar {
-                width: 80px;
-            }
-            
-            .sidebar-header h1, .sidebar-header p, .sidebar-menu span {
-                display: none;
-            }
-            
-            .sidebar-menu a {
-                justify-content: center;
-                padding: 15px;
-            }
-            
-            .sidebar-menu a i {
-                margin: 0;
+            .admin-sidebar {
+                transform: translateX(-100%);
             }
             
             .main-content {
-                margin-left: 80px;
+                margin-left: 0;
             }
             
             .filter-row {
                 flex-direction: column;
-                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .form-group {
+                min-width: auto;
+            }
+            
+            .form-buttons {
+                width: 100%;
             }
         }
 
@@ -501,223 +585,249 @@ $result = $stmt->get_result();
                 padding: 20px;
             }
             
-            .topbar {
-                padding: 15px 20px;
+            .admin-header {
+                padding: 0 20px;
             }
             
             .page-header {
                 flex-direction: column;
-                gap: 15px;
                 align-items: flex-start;
-            }
-            
-            .filter-controls {
-                flex-direction: column;
+                gap: 15px;
             }
             
             th, td {
-                padding: 12px 15px;
-                font-size: 14px;
+                padding: 12px 10px;
+                font-size: 0.9rem;
             }
             
-            .action-buttons {
+            .actions {
                 flex-direction: column;
                 gap: 5px;
             }
             
             .action-btn {
-                width: 100%;
-                justify-content: center;
+                width: 30px;
+                height: 30px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table-container {
+                padding: 15px;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h1>Admin Panel</h1>
-                <p>Project Topic Checker</p>
-            </div>
-            
-            <div class="sidebar-menu">
-                <ul>
-                    <li><a href="dashboard.php"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
-                    <li><a href="topics.php"><i class="fas fa-book"></i> <span>Manage Topics</span></a></li>
-                    <li><a href="users.php"><i class="fas fa-users"></i> <span>Manage Users</span></a></li>
-                    <li><a href="messages.php" class="active"><i class="fas fa-envelope"></i> <span>Messages</span></a></li>
-                    <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                    <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-                </ul>
-            </div>
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h1>Project Topic Checker</h1>
+            <p>Admin Dashboard</p>
         </div>
         
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Topbar -->
-            <div class="topbar">
-                <h2>Messages</h2>
-                
-                <div class="user-info">
-                    <div class="details">
-                        <div class="name"><?php echo htmlspecialchars($_SESSION['admin']['username']); ?></div>
-                        <div class="role">Administrator</div>
-                    </div>
-                    <div class="avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                </div>
+        <nav class="sidebar-menu">
+            <a href="dashboard_modern.php" class="menu-item">
+                <i class="fas fa-home"></i>
+                Dashboard
+            </a>
+            <a href="topics.php" class="menu-item">
+                <i class="fas fa-book"></i>
+                Manage Topics
+            </a>
+            <a href="users.php" class="menu-item">
+                <i class="fas fa-users"></i>
+                Manage Users
+            </a>
+            <a href="messages.php" class="menu-item active">
+                <i class="fas fa-envelope"></i>
+                Messages
+            </a>
+            <a href="report.php" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                Reports
+            </a>
+            <a href="settings.php" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="window.location.href='logout.php'">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-title">
+                <h1>Messages</h1>
+                <p>Manage contact form submissions</p>
             </div>
             
-            <!-- Dashboard Content -->
-            <div class="dashboard-content">
-                <div class="page-header">
-                    <h1><i class="fas fa-envelope"></i> Contact Messages</h1>
-                    <div class="filter-controls">
-                        <?php if ($totalRecords > 0): ?>
-                            <a href="?action=delete_all" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete ALL messages? This action cannot be undone.')">
-                                <i class="fas fa-trash-alt"></i> Delete All Messages
-                            </a>
-                        <?php endif; ?>
-                    </div>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <?php echo substr($_SESSION['admin']['unm'], 0, 1); ?>
                 </div>
-                
-                <!-- Alert Messages -->
-                <?php if (isset($_SESSION['message'])): ?>
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if (isset($_SESSION['error'])): ?>
-                    <div class="alert alert-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <!-- Filters -->
-                <div class="filters">
-                    <form method="GET" action="">
-                        <div class="filter-row">
-                            <div class="filter-group">
-                                <label for="search">Search Messages</label>
-                                <input type="text" name="search" id="search" placeholder="Search by name, email, or message..." value="<?php echo htmlspecialchars($searchTerm); ?>">
-                            </div>
-                        </div>
-                        
-                        <div class="filter-controls">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter"></i> Apply Filters
-                            </button>
-                            <a href="messages.php" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Clear Filters
-                            </a>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Messages Table -->
-                <div class="table-container">
-                    <?php if ($result && $result->num_rows > 0): ?>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Message</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($message = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo $message['c_id']; ?></td>
-                                        <td>
-                                            <div style="font-weight: 600;"><?php echo htmlspecialchars($message['c_nm']); ?></div>
-                                            <div style="font-size: 13px; color: #7f8c8d; margin-top: 5px;">
-                                                <?php echo htmlspecialchars($message['c_mno']); ?>
-                                            </div>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($message['c_email']); ?></td>
-                                        <td>
-                                            <div class="message-preview">
-                                                <?php echo htmlspecialchars(strlen($message['c_msg']) > 100 ? substr($message['c_msg'], 0, 100) . '...' : $message['c_msg']); ?>
-                                            </div>
-                                        </td>
-                                        <td><?php echo date('M j, Y', $message['c_time']); ?></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="view_message.php?id=<?php echo $message['c_id']; ?>" class="action-btn btn-view">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                <a href="?action=delete&id=<?php echo $message['c_id']; ?>" class="action-btn btn-delete" onclick="return confirm('Are you sure you want to delete this message?')">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                        
-                        <!-- Pagination -->
-                        <?php if ($totalPages > 1): ?>
-                            <div class="pagination">
-                                <?php if ($currentPage > 1): ?>
-                                    <a href="?page=1<?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                        <i class="fas fa-angle-double-left"></i> First
-                                    </a>
-                                    <a href="?page=<?php echo $currentPage - 1; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                        <i class="fas fa-angle-left"></i> Previous
-                                    </a>
-                                <?php else: ?>
-                                    <span class="disabled"><i class="fas fa-angle-double-left"></i> First</span>
-                                    <span class="disabled"><i class="fas fa-angle-left"></i> Previous</span>
-                                <?php endif; ?>
-                                
-                                <?php
-                                $startPage = max(1, $currentPage - 2);
-                                $endPage = min($totalPages, $currentPage + 2);
-                                
-                                for ($i = $startPage; $i <= $endPage; $i++):
-                                ?>
-                                    <?php if ($i == $currentPage): ?>
-                                        <span class="current"><?php echo $i; ?></span>
-                                    <?php else: ?>
-                                        <a href="?page=<?php echo $i; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    <?php endif; ?>
-                                <?php endfor; ?>
-                                
-                                <?php if ($currentPage < $totalPages): ?>
-                                    <a href="?page=<?php echo $currentPage + 1; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                        Next <i class="fas fa-angle-right"></i>
-                                    </a>
-                                    <a href="?page=<?php echo $totalPages; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
-                                        Last <i class="fas fa-angle-double-right"></i>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="disabled">Next <i class="fas fa-angle-right"></i></span>
-                                    <span class="disabled">Last <i class="fas fa-angle-double-right"></i></span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <div style="padding: 50px; text-align: center; color: #7f8c8d;">
-                            <i class="fas fa-envelope fa-3x" style="margin-bottom: 20px; color: #bdc3c7;"></i>
-                            <h3>No Messages Found</h3>
-                            <p>There are no contact messages matching your current criteria.</p>
-                        </div>
-                    <?php endif; ?>
+                <div class="user-details">
+                    <div class="name"><?php echo htmlspecialchars($_SESSION['admin']['unm']); ?></div>
+                    <div class="role">Administrator</div>
                 </div>
             </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <div class="page-header">
+                <h1 class="page-title">Contact Messages</h1>
+                <?php if ($totalRecords > 0): ?>
+                    <a href="?action=delete_all" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete ALL messages? This action cannot be undone.')">
+                        <i class="fas fa-trash-alt"></i> Delete All Messages
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Display Messages -->
+            <?php if (isset($_SESSION['message'])): ?>
+                <div class="message success">
+                    <i class="fas fa-check-circle"></i> <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="message error">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <form method="GET" action="">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="search">Search Messages</label>
+                            <input type="text" name="search" id="search" class="form-control" placeholder="Search by name, email, or message..." value="<?php echo htmlspecialchars($searchTerm); ?>">
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <?php if (!empty($searchTerm)): ?>
+                                <a href="messages.php" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Messages Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>All Messages</h3>
+                    <div>Showing <?php echo $result->num_rows; ?> of <?php echo $totalRecords; ?> messages</div>
+                </div>
+                
+                <?php if ($result->num_rows > 0): ?>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Message</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($message = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($message['c_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($message['c_email']); ?></td>
+                                    <td>
+                                        <div class="message-preview" title="<?php echo htmlspecialchars($message['c_msg']); ?>">
+                                            <?php echo htmlspecialchars(substr($message['c_msg'], 0, 50)) . (strlen($message['c_msg']) > 50 ? '...' : ''); ?>
+                                        </div>
+                                    </td>
+                                    <td><?php echo date('M j, Y', $message['c_time']); ?></td>
+                                    <td class="actions">
+                                        <a href="view_message.php?id=<?php echo $message['c_id']; ?>" class="action-btn view-btn" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="?action=delete&id=<?php echo $message['c_id']; ?>" class="action-btn delete-btn" title="Delete Message" onclick="return confirm('Are you sure you want to delete this message?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <?php if ($totalPages > 1): ?>
+                        <div class="pagination">
+                            <?php if ($currentPage > 1): ?>
+                                <a href="?page=1<?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
+                                    <i class="fas fa-angle-double-left"></i> First
+                                </a>
+                                <a href="?page=<?php echo $currentPage - 1; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
+                                    <i class="fas fa-angle-left"></i> Previous
+                                </a>
+                            <?php else: ?>
+                                <span class="disabled"><i class="fas fa-angle-double-left"></i> First</span>
+                                <span class="disabled"><i class="fas fa-angle-left"></i> Previous</span>
+                            <?php endif; ?>
+                            
+                            <?php
+                            $startPage = max(1, $currentPage - 2);
+                            $endPage = min($totalPages, $currentPage + 2);
+                            
+                            for ($i = $startPage; $i <= $endPage; $i++):
+                            ?>
+                                <?php if ($i == $currentPage): ?>
+                                    <span class="current"><?php echo $i; ?></span>
+                                <?php else: ?>
+                                    <a href="?page=<?php echo $i; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
+                                        <?php echo $i; ?>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a href="?page=<?php echo $currentPage + 1; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
+                                    Next <i class="fas fa-angle-right"></i>
+                                </a>
+                                <a href="?page=<?php echo $totalPages; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
+                                    Last <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="disabled">Next <i class="fas fa-angle-right"></i></span>
+                                <span class="disabled">Last <i class="fas fa-angle-double-right"></i></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-envelope"></i>
+                        <h3>No Messages Found</h3>
+                        <p>There are no contact messages matching your current criteria.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
-    </div>
+    </main>
 </body>
 </html>

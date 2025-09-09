@@ -2,7 +2,7 @@
 session_start();
 // Check if admin is logged in
 if (!isset($_SESSION['admin']) || $_SESSION['admin']['status'] !== true) {
-    header("Location: login.php");
+    header("Location: login_new.php");
     exit();
 }
 
@@ -562,19 +562,19 @@ if ($rejected_res) {
                 <i class="fas fa-home"></i>
                 Dashboard
             </a>
-            <a href="topics_manage.php" class="menu-item">
+            <a href="topics.php" class="menu-item">
                 <i class="fas fa-book"></i>
                 Manage Topics
             </a>
-            <a href="users_manage.php" class="menu-item">
+            <a href="users.php" class="menu-item">
                 <i class="fas fa-users"></i>
                 Manage Users
             </a>
-            <a href="topics_submitted.php" class="menu-item">
-                <i class="fas fa-upload"></i>
-                Submitted Topics
+            <a href="messages.php" class="menu-item">
+                <i class="fas fa-envelope"></i>
+                Messages
             </a>
-            <a href="reports.php" class="menu-item">
+            <a href="report.php" class="menu-item">
                 <i class="fas fa-chart-bar"></i>
                 Reports
             </a>
@@ -731,22 +731,17 @@ if ($rejected_res) {
                     </div>
                     
                     <div class="action-buttons">
-                        <a href="topics_manage.php" class="action-btn primary">
+                        <a href="topics.php" class="action-btn primary">
                             <i class="fas fa-book"></i>
                             Manage Topics
                         </a>
                         
-                        <a href="users_manage.php" class="action-btn success">
+                        <a href="users.php" class="action-btn success">
                             <i class="fas fa-users"></i>
                             Manage Users
                         </a>
                         
-                        <a href="topics_submitted.php" class="action-btn warning">
-                            <i class="fas fa-upload"></i>
-                            View Submissions
-                        </a>
-                        
-                        <a href="reports.php" class="action-btn danger">
+                        <a href="report.php" class="action-btn danger">
                             <i class="fas fa-chart-bar"></i>
                             Generate Reports
                         </a>

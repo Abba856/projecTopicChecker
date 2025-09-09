@@ -1,88 +1,92 @@
 </div><!-- end .main-content -->
 
-<aside class="sidebar">
-    <?php
-    if (isset($_SESSION['client']['status'])) {
-        echo '<div class="sidebar-widget user-widget">';
-        echo '<h3 class="widget-title"><i class="fas fa-user-circle"></i> Welcome Back</h3>';
-        echo '<div class="user-info">';
-        echo '<div class="user-avatar">';
-        echo '<i class="fas fa-user-circle"></i>';
-        echo '</div>';
-        echo '<p class="user-name">' . htmlspecialchars($_SESSION['client']['unm']) . '</p>';
-        echo '<a href="logout.php" class="sidebar-logout-btn">';
-        echo '<i class="fas fa-sign-out-alt"></i> Log Out';
-        echo '</a>';
-        echo '</div>';
-        echo '</div>';
-    }
-    ?>
-    
-    <div class="sidebar-widget">
-        <h3 class="widget-title"><i class="fas fa-clock"></i> Recently Added</h3>
-        <div class="recent-topics">
-            <?php
-            // Get the database connection
-            if (!isset($link) || !$link) {
-                include("includes/connection.php");
-            }
-
-            // Ensure we have a valid connection
-            if (isset($link) && $link) {
-                $cat_q = "SELECT id, topic_title, status, created_at FROM topics ORDER BY id DESC LIMIT 0,8";
-                $cat_res = $link->query($cat_q);
-
-                if ($cat_res && $cat_res->num_rows > 0) {
-                    echo '<ul class="recent-list">';
-                    while ($cat_row = $cat_res->fetch_assoc()) {
-                        echo '<li class="recent-item">';
-                        echo '<a href="book_detail.php?id=' . $cat_row['id'] . '" class="recent-link">';
-                        echo '<div class="recent-content">';
-                        echo '<h4 class="recent-title">' . htmlspecialchars($cat_row['topic_title']) . '</h4>';
-                        echo '<div class="recent-meta">';
-                        echo '<span class="topic-status ' . htmlspecialchars($cat_row['status']) . '">';
-                        echo '<i class="fas fa-circle status-icon"></i>';
-                        echo htmlspecialchars($cat_row['status']);
-                        echo '</span>';
-                        echo '<span class="recent-date">' . date('M j', strtotime($cat_row['created_at'])) . '</span>';
-                        echo '</div>';
-                        echo '</div>';
-                        echo '</a>';
-                        echo '</li>';
+<div class="sidebar-centered">
+    <div class="sidebar-content-wrapper">
+        <?php
+        if (isset($_SESSION['client']['status'])) {
+            echo '<div class="sidebar-widget user-widget">';
+            echo '<h3 class="widget-title"><i class="fas fa-user-circle"></i> Welcome Back</h3>';
+            echo '<div class="user-info">';
+            echo '<div class="user-avatar">';
+            echo '<i class="fas fa-user-circle"></i>';
+            echo '</div>';
+            echo '<p class="user-name">' . htmlspecialchars($_SESSION['client']['unm']) . '</p>';
+            echo '<a href="logout.php" class="sidebar-logout-btn">';
+            echo '<i class="fas fa-sign-out-alt"></i> Log Out';
+            echo '</a>';
+            echo '</div>';
+            echo '</div>';
+        }
+        ?>
+        
+        <div class="sidebar-widgets-container">
+            <div class="sidebar-widget">
+                <h3 class="widget-title"><i class="fas fa-clock"></i> Recently Added</h3>
+                <div class="recent-topics">
+                    <?php
+                    // Get the database connection
+                    if (!isset($link) || !$link) {
+                        include("includes/connection.php");
                     }
-                    echo '</ul>';
-                } else {
-                    echo '<div class="no-topics">';
-                    echo '<i class="fas fa-book-open"></i>';
-                    echo '<p>No topics available yet.</p>';
-                    echo '</div>';
-                }
-            } else {
-                echo '<div class="no-topics">';
-                echo '<i class="fas fa-exclamation-triangle"></i>';
-                echo '<p>Database connection error.</p>';
-                echo '</div>';
-            }
-            ?>
-        </div>
-    </div>
-    
-    <div class="sidebar-widget newsletter-widget">
-        <h3 class="widget-title"><i class="fas fa-bell"></i> Stay Updated</h3>
-        <div class="newsletter-content">
-            <p>Get notified when new project topics are added.</p>
-            <form class="newsletter-form">
-                <div class="form-group">
-                    <input type="email" placeholder="Your email address" required>
+
+                    // Ensure we have a valid connection
+                    if (isset($link) && $link) {
+                        $cat_q = "SELECT id, topic_title, status, created_at FROM topics ORDER BY id DESC LIMIT 0,8";
+                        $cat_res = $link->query($cat_q);
+
+                        if ($cat_res && $cat_res->num_rows > 0) {
+                            echo '<ul class="recent-list">';
+                            while ($cat_row = $cat_res->fetch_assoc()) {
+                                echo '<li class="recent-item">';
+                                echo '<a href="book_detail.php?id=' . $cat_row['id'] . '" class="recent-link">';
+                                echo '<div class="recent-content">';
+                                echo '<h4 class="recent-title">' . htmlspecialchars($cat_row['topic_title']) . '</h4>';
+                                echo '<div class="recent-meta">';
+                                echo '<span class="topic-status ' . htmlspecialchars($cat_row['status']) . '">';
+                                echo '<i class="fas fa-circle status-icon"></i>';
+                                echo htmlspecialchars($cat_row['status']);
+                                echo '</span>';
+                                echo '<span class="recent-date">' . date('M j', strtotime($cat_row['created_at'])) . '</span>';
+                                echo '</div>';
+                                echo '</div>';
+                                echo '</a>';
+                                echo '</li>';
+                            }
+                            echo '</ul>';
+                        } else {
+                            echo '<div class="no-topics">';
+                            echo '<i class="fas fa-book-open"></i>';
+                            echo '<p>No topics available yet.</p>';
+                            echo '</div>';
+                        }
+                    } else {
+                        echo '<div class="no-topics">';
+                        echo '<i class="fas fa-exclamation-triangle"></i>';
+                        echo '<p>Database connection error.</p>';
+                        echo '</div>';
+                    }
+                    ?>
                 </div>
-                <button type="submit" class="subscribe-btn">
-                    <i class="fas fa-paper-plane"></i>
-                    Subscribe
-                </button>
-            </form>
+            </div>
+            
+            <div class="sidebar-widget newsletter-widget">
+                <h3 class="widget-title"><i class="fas fa-bell"></i> Stay Updated</h3>
+                <div class="newsletter-content">
+                    <p>Get notified when new project topics are added.</p>
+                    <form class="newsletter-form">
+                        <div class="form-group">
+                            <input type="email" placeholder="Your email address" required>
+                        </div>
+                        <button type="submit" class="subscribe-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</aside><!-- end .sidebar -->
+</div><!-- end .sidebar-centered -->
 
 </div><!-- end .page-container -->
 
@@ -143,44 +147,33 @@
 
 <style>
 /* Refined Modern Footer Styles */
-.sidebar {
-    width: 320px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    padding: 30px;
-    height: fit-content;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.modern-post {
-    margin-bottom: 30px;
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    padding: 30px;
-    position: relative;
-    overflow: hidden;
-}
-
-.modern-post::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
+.sidebar-centered {
     width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.sidebar-content-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 20px;
+}
+
+.sidebar-widgets-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
 }
 
 .sidebar-widget {
-    margin-bottom: 35px;
-    padding-bottom: 30px;
+    margin-bottom: 0;
+    padding-bottom: 35px;
     border-bottom: 1px solid #eef2f7;
     background: #fff;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    padding: 30px;
+    padding: 35px;
     position: relative;
     overflow: hidden;
 }
@@ -197,13 +190,13 @@
 
 .sidebar-widget:last-child {
     margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+    padding-bottom: 35px;
+    border-bottom: 1px solid #eef2f7;
 }
 
 .widget-title {
     color: #2c3e50;
-    font-size: 22px;
+    font-size: 24px;
     margin-bottom: 25px;
     font-weight: 700;
     display: flex;
@@ -226,17 +219,17 @@
 
 .widget-title i {
     color: #667eea;
-    font-size: 20px;
+    font-size: 22px;
 }
 
 /* User Widget */
 .user-widget {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 15px;
-    padding: 30px;
+    padding: 35px;
     color: white;
     border: none;
-    margin-bottom: 35px;
+    margin-bottom: 30px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     position: relative;
     overflow: hidden;
@@ -268,13 +261,13 @@
 }
 
 .user-avatar i {
-    font-size: 48px;
+    font-size: 52px;
     color: rgba(255, 255, 255, 0.9);
 }
 
 .user-name {
     text-align: center;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 600;
     margin: 0 0 25px 0;
     color: white;
@@ -285,10 +278,10 @@
     width: 100%;
     background: rgba(255, 255, 255, 0.2);
     color: white;
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-radius: 8px;
     text-decoration: none;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -308,8 +301,8 @@
 }
 
 .recent-item {
-    margin-bottom: 18px;
-    border-radius: 10px;
+    margin-bottom: 20px;
+    border-radius: 12px;
     transition: all 0.3s ease;
 }
 
@@ -321,8 +314,8 @@
     display: block;
     text-decoration: none;
     color: inherit;
-    border-radius: 10px;
-    padding: 15px;
+    border-radius: 12px;
+    padding: 18px;
     background: #f8f9fa;
     border: 1px solid #eef2f7;
     transition: all 0.3s ease;
@@ -338,12 +331,12 @@
 .recent-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .recent-title {
     margin: 0;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
     color: #2c3e50;
     line-height: 1.4;
@@ -358,18 +351,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .topic-status {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .topic-status.available {
@@ -388,7 +381,7 @@
 }
 
 .status-icon {
-    font-size: 6px;
+    font-size: 7px;
 }
 
 .recent-date {
@@ -399,35 +392,36 @@
 .no-topics {
     text-align: center;
     color: #7f8c8d;
-    padding: 30px 20px;
+    padding: 35px 25px;
 }
 
 .no-topics i {
-    font-size: 32px;
+    font-size: 36px;
     color: #bdc3c7;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .no-topics p {
     margin: 0;
     font-style: italic;
+    font-size: 16px;
 }
 
 /* Quick Stats */
 .stats-widget .quick-stats {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    margin-top: 20px;
+    gap: 25px;
+    margin-top: 25px;
 }
 
 .stat-item {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 18px;
     background: #f8f9fa;
-    border-radius: 10px;
-    padding: 15px;
+    border-radius: 12px;
+    padding: 18px;
     border: 1px solid #eef2f7;
     transition: all 0.3s ease;
 }
@@ -439,15 +433,15 @@
 }
 
 .stat-icon {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .stat-content {
@@ -456,15 +450,15 @@
 
 .stat-number {
     display: block;
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
     color: #2c3e50;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     line-height: 1;
 }
 
 .stat-label {
-    font-size: 13px;
+    font-size: 15px;
     color: #7f8c8d;
     font-weight: 500;
     margin: 0;
@@ -473,23 +467,23 @@
 /* Newsletter Widget */
 .newsletter-content p {
     color: #555;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.5;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .newsletter-form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px 15px;
+    padding: 14px 18px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 15px;
     transition: all 0.3s ease;
     background: #f8f9fa;
 }
@@ -505,16 +499,16 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .subscribe-btn:hover {
@@ -544,23 +538,23 @@
 }
 
 .footer-section h3 {
-    font-size: 24px;
+    font-size: 26px;
     margin-bottom: 25px;
     font-weight: 700;
     color: white;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .footer-section h4 {
-    font-size: 20px;
+    font-size: 22px;
     margin-bottom: 25px;
     font-weight: 600;
     color: white;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     position: relative;
     padding-bottom: 15px;
 }
@@ -580,15 +574,15 @@
     color: #bdc3c7;
     line-height: 1.7;
     margin-bottom: 20px;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 .contact-info p {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    font-size: 14px;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
 }
 
 .contact-info p:last-child {
@@ -597,7 +591,7 @@
 
 .social-links {
     display: flex;
-    gap: 15px;
+    gap: 18px;
     margin-top: 25px;
 }
 
@@ -605,14 +599,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     color: white;
     text-decoration: none;
     transition: all 0.3s ease;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .social-links a:hover {
@@ -628,7 +622,7 @@
 }
 
 .footer-section ul li {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .footer-section ul li:last-child {
@@ -639,20 +633,20 @@
     color: #bdc3c7;
     text-decoration: none;
     transition: all 0.3s ease;
-    font-size: 15px;
+    font-size: 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 5px 0;
+    gap: 12px;
+    padding: 6px 0;
 }
 
 .footer-section ul li a:hover {
     color: white;
-    padding-left: 8px;
+    padding-left: 10px;
 }
 
 .footer-section ul li a i {
-    font-size: 12px;
+    font-size: 14px;
     color: #667eea;
 }
 
@@ -668,7 +662,7 @@
 .footer-bottom-content p {
     color: #bdc3c7;
     margin: 5px 0;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .footer-bottom-content a {
@@ -687,30 +681,18 @@
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-    .sidebar {
-        width: 280px;
-        padding: 25px;
+    .sidebar-widgets-container {
+        grid-template-columns: 1fr;
+        max-width: 600px;
+        margin: 0 auto;
     }
     
-    .footer-content {
-        gap: 30px;
+    .sidebar-content-wrapper {
+        padding: 0 15px;
     }
 }
 
-@media (min-width: 993px) {
-    .sidebar {
-        width: 100%;
-    }
-}
-
-@media (max-width: 992px) {
-    .sidebar {
-        width: 100%;
-        margin-top: 30px;
-        position: static;
-        order: 2;
-    }
-    
+@media (max-width: 768px) {
     .footer-content {
         grid-template-columns: 1fr;
         gap: 40px;
@@ -718,85 +700,41 @@
     
     .footer-section h3,
     .footer-section h4 {
-        font-size: 22px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        padding: 20px;
-    }
-    
-    .widget-title {
-        font-size: 20px;
-    }
-    
-    .user-name {
-        font-size: 18px;
-    }
-    
-    .stat-item {
-        padding: 12px;
-    }
-    
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    
-    .stat-number {
-        font-size: 20px;
-    }
-    
-    .social-links {
-        justify-content: center;
-    }
-    
-    .modern-footer {
-        padding: 40px 0 0;
-    }
-    
-    .footer-container {
-        padding: 0 15px;
+        font-size: 24px;
     }
 }
 
 @media (max-width: 480px) {
-    .sidebar {
-        padding: 15px;
-    }
-    
     .widget-title {
-        font-size: 18px;
+        font-size: 20px;
         gap: 10px;
     }
     
     .recent-link {
-        padding: 12px;
+        padding: 15px;
     }
     
     .recent-title {
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .footer-section h3,
     .footer-section h4 {
-        font-size: 20px;
+        font-size: 22px;
     }
     
     .footer-section ul li a {
-        font-size: 14px;
+        font-size: 15px;
     }
     
     .social-links a {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
     }
     
     .footer-bottom-content p {
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 </style>
