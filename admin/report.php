@@ -9,8 +9,8 @@ if (!isset($_SESSION['admin']['status'])) {
 
 include("../includes/connection.php");
 
-// Handle PDF download
-if (isset($_GET['download']) && $_GET['download'] == 'pdf') {
+// Handle CSV download
+if (isset($_GET['download']) && $_GET['download'] == 'csv') {
     // Get filter parameters
     $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
     $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
@@ -129,37 +129,22 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Get statistics
-$totalQuery = "SELECT 
+// Get statistics - use the same where clause as main query
+$statsQuery = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as pending,
     SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as accepted,
     SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as rejected
-    FROM topics " . ($whereClause ? substr($whereClause, 0, strrpos($whereClause, ' ')) : "");
+    FROM topics " . $whereClause;
     
-$totalStmt = $link->prepare($totalQuery);
+$statsStmt = $link->prepare($statsQuery);
 
-if (!empty($params) && $whereClause) {
-    // Remove date parameters for statistics query if we have a where clause
-    $statParams = array_slice($params, 0, count($params) - substr_count($whereClause, '?'));
-    $statTypes = substr($types, 0, strlen($types) - substr_count($whereClause, '?'));
-    
-    if (!empty($statParams)) {
-        $totalStmt->bind_param($statTypes, ...$statParams);
-    }
-} else if (empty($whereClause)) {
-    // No filters, get all stats
-    $totalQuery = "SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = 'taken' THEN 1 ELSE 0 END) as accepted,
-        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as rejected
-        FROM topics";
-    $totalStmt = $link->prepare($totalQuery);
+if (!empty($params)) {
+    $statsStmt->bind_param($types, ...$params);
 }
 
-$totalStmt->execute();
-$statsResult = $totalStmt->get_result();
+$statsStmt->execute();
+$statsResult = $statsStmt->get_result();
 $stats = $statsResult->fetch_assoc();
 ?>
 
@@ -635,10 +620,53 @@ $stats = $statsResult->fetch_assoc();
             color: var(--gray-800);
         }
 
+        .menu-toggle-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .menu-toggle-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Scrollable Table Container */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -25px;
+            padding: 0 25px;
+        }
+        
+        .table-responsive table {
+            min-width: 600px;
+            width: 100%;
+        }
+
         /* Responsive Design */
+        @media (max-width: 1199px) {
+            .activity-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media (max-width: 992px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                z-index: 1001;
+                position: fixed;
+                top: 0;
+                height: 100vh;
+                transition: transform 0.3s ease;
             }
             
             .main-content {
@@ -652,7 +680,30 @@ $stats = $statsResult->fetch_assoc();
             }
             
             .admin-header {
-                padding: 0 20px;
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                gap: 10px;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
+            }
+            
+            .user-details {
+                display: none;
             }
             
             .page-header {
@@ -673,6 +724,72 @@ $stats = $statsResult->fetch_assoc();
                 width: 100%;
                 justify-content: center;
             }
+            
+            .form-group label {
+                font-size: 0.9rem;
+            }
+            
+            .form-control {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-title {
+                font-size: 0.9rem;
+            }
+            
+            .stat-value {
+                font-size: 1.6rem;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .view-all {
+                font-size: 0.85rem;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                align-self: flex-start;
+            }
+            
+            .activity-desc {
+                font-size: 0.85rem;
+            }
+            
+            .activity-time {
+                font-size: 0.75rem;
+            }
         }
 
         @media (max-width: 576px) {
@@ -689,6 +806,57 @@ $stats = $statsResult->fetch_assoc();
             th, td {
                 padding: 12px 10px;
                 font-size: 0.9rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            .admin-header {
+                padding: 0 10px;
+            }
+            
+            .activity-title {
+                font-size: 1rem;
+            }
+            
+            .activity-desc {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .activity-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .activity-title {
+                font-size: 0.95rem;
+            }
+            
+            .btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -742,7 +910,7 @@ $stats = $statsResult->fetch_assoc();
         <header class="admin-header">
             <div class="header-title">
                 <h1>Reports</h1>
-                <p>Generate and download project topic reports</p>
+                <p>Download reports</p>
             </div>
             
             <div class="user-info">
@@ -794,7 +962,7 @@ $stats = $statsResult->fetch_assoc();
                         <a href="report.php" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Clear Filters
                         </a>
-                        <button type="submit" name="download" value="pdf" class="btn btn-success">
+                        <button type="submit" name="download" value="csv" class="btn btn-success">
                             <i class="fas fa-download"></i> Download CSV Report
                         </button>
                     </div>
@@ -844,37 +1012,39 @@ $stats = $statsResult->fetch_assoc();
                 </div>
                 
                 <?php if ($result->num_rows > 0): ?>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Topic Title</th>
-                                <th>Status</th>
-                                <th>Created Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($topic = $result->fetch_assoc()): ?>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td><?php echo $topic['id']; ?></td>
-                                    <td><?php echo htmlspecialchars(substr($topic['topic_title'], 0, 50)) . (strlen($topic['topic_title']) > 50 ? '...' : ''); ?></td>
-                                    <td>
-                                        <span class="status-badge status-<?php echo $topic['status']; ?>">
-                                            <?php 
-                                            switch($topic['status']) {
-                                                case 'available': echo 'Pending'; break;
-                                                case 'taken': echo 'Accepted'; break;
-                                                case 'completed': echo 'Rejected'; break;
-                                                default: echo ucfirst($topic['status']);
-                                            }
-                                            ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo date('M j, Y', strtotime($topic['created_at'])); ?></td>
+                                    <th>ID</th>
+                                    <th>Topic Title</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php while ($topic = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo $topic['id']; ?></td>
+                                        <td><?php echo htmlspecialchars(substr($topic['topic_title'], 0, 50)) . (strlen($topic['topic_title']) > 50 ? '...' : ''); ?></td>
+                                        <td>
+                                            <span class="status-badge status-<?php echo $topic['status']; ?>">
+                                                <?php 
+                                                switch($topic['status']) {
+                                                    case 'available': echo 'Pending'; break;
+                                                    case 'taken': echo 'Accepted'; break;
+                                                    case 'completed': echo 'Rejected'; break;
+                                                    default: echo ucfirst($topic['status']);
+                                                }
+                                                ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo date('M j, Y', strtotime($topic['created_at'])); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-book"></i>
@@ -885,5 +1055,79 @@ $stats = $statsResult->fetch_assoc();
             </div>
         </div>
     </main>
+
+    <script>
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            let isMobileMenuOpen = false;
+            
+            // Add menu toggle button to header
+            const header = document.querySelector('.admin-header');
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleButton.className = 'menu-toggle-btn';
+            
+            // Add the toggle button to the header
+            const headerTitle = header.querySelector('.header-title');
+            header.insertBefore(toggleButton, headerTitle);
+            
+            // Show toggle button on mobile
+            function checkMobileView() {
+                if (window.innerWidth <= 992) {
+                    toggleButton.style.display = 'flex';
+                    // On mobile, sidebar should be hidden by default
+                    if (!isMobileMenuOpen) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                    sidebar.style.transform = 'translateX(0)'; // Show sidebar on desktop
+                }
+            }
+            
+            // Initial check
+            checkMobileView();
+            
+            // Check on resize
+            window.addEventListener('resize', checkMobileView);
+            
+            // Toggle menu
+            toggleButton.addEventListener('click', function() {
+                isMobileMenuOpen = !isMobileMenuOpen;
+                
+                // Apply transform to the entire sidebar
+                sidebar.style.transform = isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)';
+                
+                // Change icon based on state
+                toggleButton.innerHTML = isMobileMenuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                
+                // Add backdrop when menu is open
+                if (isMobileMenuOpen) {
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'mobile-backdrop';
+                    backdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 1000;
+                        display: block;
+                    `;
+                    
+                    backdrop.addEventListener('click', function() {
+                        isMobileMenuOpen = false;
+                        sidebar.style.transform = 'translateX(-100%)';
+                        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+                        document.body.removeChild(backdrop);
+                    });
+                    
+                    document.body.appendChild(backdrop);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

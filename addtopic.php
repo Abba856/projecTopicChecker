@@ -4,6 +4,9 @@
 include("includes/connection.php");
 include("includes/header.php");
 
+// Include the similarity checker
+include("ml/similarity-checker.php");
+
 // Check if user is logged in (after including header to ensure session is started)
 if (!isset($_SESSION['client']['status'])) {
     header("location:login.php");
@@ -18,12 +21,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Validate input
     if (!empty($topic_title) && !empty($project_abstract)) {
+        // Check for similar projects using the similarity checker
+        // Use the JSSimilarityChecker to get suggestions and store them in the comment
+        include("ml/similarity-checker-endpoint.php");
+        $jsChecker = new JSSimilarityChecker();
+        $suggestions = $jsChecker->getSimilaritySuggestions($topic_title, $project_abstract, 3);
+        
+        // Format suggestions as comment text to store in the database
+        $comment = '';
+        if (!empty($suggestions)) {
+            $comment = "Similar project suggestions:\n\n";
+            foreach ($suggestions as $index => $suggestion) {
+                $comment .= ($index + 1) . ". " . $suggestion['title'] . "\n";
+                $comment .= "   Similarity: " . $suggestion['similarity_score'] . "\n";
+                $comment .= "   Abstract: " . (strlen($suggestion['abstract']) > 150 ? substr($suggestion['abstract'], 0, 150) . "..." : $suggestion['abstract']) . "\n\n";
+            }
+        } else {
+            $comment = "No similar projects found. Your topic appears to be unique.";
+        }
+        
+        // Check if any similar projects were found for display purposes
+        $has_similar = false;
+        $similar_topics = [];
+        $checker = new SimilarityChecker();
+        $similar_projects = $checker->checkSimilarityPHPOnly($topic_title, $project_abstract, 3);
+        if (!isset($similar_projects['error']) && is_array($similar_projects)) {
+            foreach ($similar_projects as $project) {
+                if ($project['avg_similarity'] > 0.3) { // Threshold for similarity
+                    $has_similar = true;
+                    $similar_topics[] = $project;
+                }
+            }
+        }
+        
+        // If similar topics found, show them but still allow submission
+        if ($has_similar) {
+            $warning_message = "Similar projects were found. Consider reviewing these suggestions before submitting:";
+            $similar_projects_found = $similar_topics;
+        }
+        
         // Use prepared statement to prevent SQL injection
         // Set default status to 'available' for new topics
         $status = 'available';
         $user_id = $_SESSION['client']['id']; // Get user ID from session
         $stmt = $link->prepare("INSERT INTO topics (topic_title, comment, project_abstract, status, user_id) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssi", $topic_title, $topic_text, $project_abstract, $status, $user_id);
+        $stmt->bind_param("ssssi", $topic_title, $comment, $project_abstract, $status, $user_id);
         
         if ($stmt->execute()) {
             $success_message = "Topic added successfully!";
@@ -178,6 +220,46 @@ textarea.form-control {
     color: #e74c3c;
 }
 
+.similarity-suggestions {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.similarity-suggestion {
+    padding: 10px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.similarity-suggestion h4 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.similarity-suggestion p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.similarity-score {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.loading {
+    color: #667eea;
+    font-style: italic;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .modern-content {
@@ -212,15 +294,28 @@ textarea.form-control {
             </div>
         <?php endif; ?>
         
+        <?php if (isset($warning_message) && !empty($similar_projects_found)): ?>
+            <div class="alert alert-warning" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border-left: 4px solid #e67e22;">
+                <i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($warning_message); ?>
+                <div style="margin-top: 10px;">
+                    <strong>Suggested similar projects:</strong>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <?php foreach ($similar_projects_found as $project): ?>
+                            <li style="margin-bottom: 8px;">
+                                <strong><?php echo htmlspecialchars($project['title']); ?></strong> 
+                                <div style="font-size: 0.9em; margin-top: 3px;"><?php echo htmlspecialchars(substr($project['abstract'], 0, 150)) . (strlen($project['abstract']) > 150 ? '...' : ''); ?></div>
+                                <div style="font-size: 0.8em; color: #ecf0f1; margin-top: 3px;">Similarity: <?php echo round($project['avg_similarity'] * 100, 2); ?>%</div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        <?php endif; ?>
+        
         <form method="POST" action="">
             <div class="form-group">
                 <label for="topic_title">Topic Title <span class="required">*</span></label>
                 <input type="text" id="topic_title" name="topic_title" class="form-control" placeholder="Enter the project topic title" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="topic_text">Topic Description</label>
-                <textarea id="topic_text" name="topic_text" class="form-control" placeholder="Provide a brief description of the topic (optional)"></textarea>
             </div>
             
             <div class="form-group">
@@ -236,9 +331,99 @@ textarea.form-control {
                     <i class="fas fa-book"></i> View My Topics
                 </a>
             </div>
+            
+            <!-- Real-time similarity suggestions container -->
+            <div id="similarity-suggestions-container" style="display: none;">
+                <h3 style="color: #2c3e50; margin-top: 25px;">Similar Projects Found:</h3>
+                <div id="similarity-suggestions" class="similarity-suggestions">
+                    <div class="loading">Checking for similar projects...</div>
+                </div>
+            </div>
         </form>
     </div>
 </div><!-- end .main-content -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const topicTitleInput = document.getElementById('topic_title');
+    const projectAbstractInput = document.getElementById('project_abstract');
+    const suggestionsContainer = document.getElementById('similarity-suggestions-container');
+    const suggestionsDiv = document.getElementById('similarity-suggestions');
+    
+    // Debounce function to limit API calls
+    let debounceTimer;
+    
+    function checkSimilarity() {
+        const topicTitle = topicTitleInput.value.trim();
+        const projectAbstract = projectAbstractInput.value.trim();
+        
+        // Only check if both fields have sufficient content
+        if (topicTitle.length < 5 || projectAbstract.length < 20) {
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
+        
+        // Show loading indicator
+        suggestionsContainer.style.display = 'block';
+        suggestionsDiv.innerHTML = '<div class="loading">Checking for similar projects...</div>';
+        
+        // Send data to server
+        fetch('check_similarity.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic_title: topicTitle,
+                project_abstract: projectAbstract
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.similar_projects && data.similar_projects.length > 0) {
+                displaySuggestions(data.similar_projects);
+            } else {
+                suggestionsDiv.innerHTML = '<p>No similar projects found. Your topic appears to be unique!</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            suggestionsDiv.innerHTML = '<p style="color: #e74c3c;">Error checking for similar projects. Please try again.</p>';
+        });
+    }
+    
+    function displaySuggestions(projects) {
+        if (projects.length === 0) {
+            suggestionsDiv.innerHTML = '<p>No similar projects found. Your topic appears to be unique!</p>';
+            return;
+        }
+        
+        let html = '';
+        projects.forEach(project => {
+            html += `
+                <div class="similarity-suggestion">
+                    <h4>${project.title || 'Untitled Project'}</h4>
+                    <p>${project.abstract.substring(0, 200) + (project.abstract.length > 200 ? '...' : '')}</p>
+                    <p>Avg Similarity: <span class="similarity-score">${project.avg_similarity}%</span></p>
+                </div>
+            `;
+        });
+        
+        suggestionsDiv.innerHTML = html;
+    }
+    
+    // Add event listeners with debounce
+    topicTitleInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkSimilarity, 1000); // 1 second delay
+    });
+    
+    projectAbstractInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkSimilarity, 1000); // 1 second delay
+    });
+});
+</script>
 
 <?php
 include("includes/footer.php");

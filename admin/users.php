@@ -73,13 +73,16 @@ $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($currentPage - 1) * $recordsPerPage;
 
 // Get users with pagination
-$query = "SELECT * FROM register " . $whereClause . "ORDER BY r_id DESC LIMIT ? OFFSET ?";
-$params[] = $recordsPerPage;
-$params[] = $offset;
-$types .= "ii";
+$query = "SELECT * FROM register " . $whereClause . " ORDER BY r_id DESC LIMIT ? OFFSET ?";
+
+// Prepare parameters array for query (including pagination)
+$queryParams = $params;
+$queryParams[] = $recordsPerPage;
+$queryParams[] = $offset;
+$queryTypes = $types . "ii";
 
 $stmt = $link->prepare($query);
-$stmt->bind_param($types, ...$params);
+$stmt->bind_param($queryTypes, ...$queryParams);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -559,10 +562,53 @@ $result = $stmt->get_result();
             color: var(--gray-800);
         }
 
+        .menu-toggle-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .menu-toggle-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Scrollable Table Container */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -25px;
+            padding: 0 25px;
+        }
+        
+        .table-responsive table {
+            min-width: 600px;
+            width: 100%;
+        }
+
         /* Responsive Design */
+        @media (max-width: 1199px) {
+            .activity-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media (max-width: 992px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                z-index: 1001;
+                position: fixed;
+                top: 0;
+                height: 100vh;
+                transition: transform 0.3s ease;
             }
             
             .main-content {
@@ -585,7 +631,30 @@ $result = $stmt->get_result();
             }
             
             .admin-header {
-                padding: 0 20px;
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                gap: 10px;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
+            }
+            
+            .user-details {
+                display: none;
             }
             
             .page-header {
@@ -608,6 +677,48 @@ $result = $stmt->get_result();
                 width: 30px;
                 height: 30px;
             }
+            
+            .form-group label {
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .view-all {
+                font-size: 0.85rem;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                align-self: flex-start;
+            }
+            
+            .activity-desc {
+                font-size: 0.85rem;
+            }
+            
+            .activity-time {
+                font-size: 0.75rem;
+            }
         }
 
         @media (max-width: 576px) {
@@ -619,6 +730,57 @@ $result = $stmt->get_result();
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            .admin-header {
+                padding: 0 10px;
+            }
+            
+            .activity-title {
+                font-size: 1rem;
+            }
+            
+            .activity-desc {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .activity-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .activity-title {
+                font-size: 0.95rem;
+            }
+            
+            .btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -672,7 +834,7 @@ $result = $stmt->get_result();
         <header class="admin-header">
             <div class="header-title">
                 <h1>Manage Users</h1>
-                <p>View and manage registered users</p>
+                <p>manage registered users</p>
             </div>
             
             <div class="user-info">
@@ -736,46 +898,48 @@ $result = $stmt->get_result();
                 </div>
                 
                 <?php if ($result->num_rows > 0): ?>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Joined Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($user = $result->fetch_assoc()): ?>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 12px;">
-                                            <div class="user-avatar-table">
-                                                <?php echo strtoupper(substr($user['r_fnm'], 0, 1)); ?>
-                                            </div>
-                                            <div>
-                                                <div style="font-weight: 600;"><?php echo htmlspecialchars($user['r_fnm']); ?></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($user['r_unm']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['r_email']); ?></td>
-                                    <td><?php echo date('M j, Y', $user['r_time']); ?></td>
-                                    <td class="actions">
-                                        <a href="view_user.php?id=<?php echo $user['r_id']; ?>" class="action-btn view-btn" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <?php if ($user['r_unm'] !== $_SESSION['admin']['unm']): ?>
-                                            <a href="?action=delete&id=<?php echo $user['r_id']; ?>" class="action-btn delete-btn" title="Delete User" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
+                                    <th>User</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Joined Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php while ($user = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <div class="user-avatar-table">
+                                                    <?php echo strtoupper(substr($user['r_fnm'], 0, 1)); ?>
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight: 600;"><?php echo htmlspecialchars($user['r_fnm']); ?></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($user['r_unm']); ?></td>
+                                        <td><?php echo htmlspecialchars($user['r_email']); ?></td>
+                                        <td><?php echo date('M j, Y', $user['r_time']); ?></td>
+                                        <td class="actions">
+                                            <a href="view_user.php?id=<?php echo $user['r_id']; ?>" class="action-btn view-btn" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <?php if ($user['r_unm'] !== $_SESSION['admin']['unm']): ?>
+                                                <a href="?action=delete&id=<?php echo $user['r_id']; ?>" class="action-btn delete-btn" title="Delete User" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                     
                     <!-- Pagination -->
                     <?php if ($totalPages > 1): ?>
@@ -830,5 +994,79 @@ $result = $stmt->get_result();
             </div>
         </div>
     </main>
+
+    <script>
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            let isMobileMenuOpen = false;
+            
+            // Add menu toggle button to header
+            const header = document.querySelector('.admin-header');
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleButton.className = 'menu-toggle-btn';
+            
+            // Add the toggle button to the header
+            const headerTitle = header.querySelector('.header-title');
+            header.insertBefore(toggleButton, headerTitle);
+            
+            // Show toggle button on mobile
+            function checkMobileView() {
+                if (window.innerWidth <= 992) {
+                    toggleButton.style.display = 'flex';
+                    // On mobile, sidebar should be hidden by default
+                    if (!isMobileMenuOpen) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                    sidebar.style.transform = 'translateX(0)'; // Show sidebar on desktop
+                }
+            }
+            
+            // Initial check
+            checkMobileView();
+            
+            // Check on resize
+            window.addEventListener('resize', checkMobileView);
+            
+            // Toggle menu
+            toggleButton.addEventListener('click', function() {
+                isMobileMenuOpen = !isMobileMenuOpen;
+                
+                // Apply transform to the entire sidebar
+                sidebar.style.transform = isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)';
+                
+                // Change icon based on state
+                toggleButton.innerHTML = isMobileMenuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                
+                // Add backdrop when menu is open
+                if (isMobileMenuOpen) {
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'mobile-backdrop';
+                    backdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 1000;
+                        display: block;
+                    `;
+                    
+                    backdrop.addEventListener('click', function() {
+                        isMobileMenuOpen = false;
+                        sidebar.style.transform = 'translateX(-100%)';
+                        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+                        document.body.removeChild(backdrop);
+                    });
+                    
+                    document.body.appendChild(backdrop);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

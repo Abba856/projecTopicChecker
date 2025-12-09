@@ -1,0 +1,15 @@
+{
+  "name": "project-similarity-checker",
+  "version": "1.0.0",
+  "description": "Check similarity between project titles and abstracts using sentence embeddings",
+  "main": "similarity-checker.js",
+  "scripts": {
+    "start": "node similarity-checker.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0"
+  },
+  "keywords": ["similarity", "nlp", "machine-learning"],
+  "author": "",
+  "license": "ISC"
+}

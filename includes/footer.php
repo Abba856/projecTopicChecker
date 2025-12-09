@@ -139,7 +139,7 @@
         <div class="footer-bottom">
             <div class="footer-bottom-content">
                 <p>&copy; 2025 Project Topic Checker. All rights reserved.</p>
-                <p>Project Made By <a href="index.php" rel="nofollow"><strong>ISAH ABDULLAHI ISAH</strong></a> with Matric No. HND/SWD/23/0107.</p>
+                <p>Project Made By <a href="https://codestopinfotech.com" target="_blank" rel="nofollow"><strong>ISAH ABDULLAHI ISAH</strong></a> with Matric No. HND/SWD/23/0107.</p>
             </div>
         </div>
     </div>

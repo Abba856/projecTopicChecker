@@ -54,6 +54,101 @@ if ($rejected_res) {
     $rejected_row = $rejected_res->fetch_assoc();
     $rejected_count = $rejected_row['count'];
 }
+
+// Fetch recent activities
+$activities = array();
+
+// Get recent topic additions
+$topics_query = "SELECT 'topic' as type, topic_title as title, created_at as timestamp, status FROM topics ORDER BY created_at DESC LIMIT 3";
+$topics_result = $link->query($topics_query);
+while ($row = $topics_result->fetch_assoc()) {
+    $action = 'added';
+    $icon = 'book';
+    $color = 'blue';
+    
+    $activities[] = array(
+        'type' => 'topic',
+        'title' => $row['title'],
+        'timestamp' => $row['timestamp'],
+        'description' => 'New topic added: ' . substr($row['title'], 0, 50) . (strlen($row['title']) > 50 ? '...' : ''),
+        'icon' => $icon,
+        'color' => $color,
+        'action' => $action
+    );
+}
+
+// Get recent topic status changes (this would require tracking status change time, so we'll look for recent changes)
+// Since we don't have a specific field for status change, we'll just get recently updated topics
+$status_changes_query = "SELECT 'topic' as type, topic_title as title, created_at as timestamp, status FROM topics WHERE status != 'available' ORDER BY created_at DESC LIMIT 2";
+$status_result = $link->query($status_changes_query);
+while ($row = $status_result->fetch_assoc()) {
+    $action = '';
+    $icon = '';
+    $color = '';
+    
+    switch($row['status']) {
+        case 'taken':
+            $action = 'accepted';
+            $icon = 'check';
+            $color = 'green';
+            break;
+        case 'completed':
+            $action = 'rejected';
+            $icon = 'times';
+            $color = 'red';
+            break;
+        default:
+            $action = 'updated';
+            $icon = 'edit';
+            $color = 'orange';
+    }
+    
+    $activities[] = array(
+        'type' => 'topic',
+        'title' => $row['title'],
+        'timestamp' => $row['timestamp'],
+        'description' => 'Topic ' . $action . ': ' . substr($row['title'], 0, 50) . (strlen($row['title']) > 50 ? '...' : ''),
+        'icon' => $icon,
+        'color' => $color,
+        'action' => $action
+    );
+}
+
+// Get recent user registrations
+$users_query = "SELECT 'user' as type, r_fnm as title, created_at as timestamp FROM register ORDER BY created_at DESC LIMIT 3";
+$users_result = $link->query($users_query);
+while ($row = $users_result->fetch_assoc()) {
+    $activities[] = array(
+        'type' => 'user',
+        'title' => $row['title'],
+        'timestamp' => $row['timestamp'],
+        'description' => 'New user registered: ' . $row['title'],
+        'icon' => 'user-plus',
+        'color' => 'green',
+        'action' => 'registered'
+    );
+}
+
+// Get recent contact messages
+$contact_query = "SELECT 'contact' as type, c_nm as title, created_at as timestamp FROM contact ORDER BY created_at DESC LIMIT 3";
+$contact_result = $link->query($contact_query);
+while ($row = $contact_result->fetch_assoc()) {
+    $activities[] = array(
+        'type' => 'contact',
+        'title' => $row['title'],
+        'timestamp' => $row['timestamp'],
+        'description' => 'New message from: ' . $row['title'],
+        'icon' => 'envelope',
+        'color' => 'orange',
+        'action' => 'messaged'
+    );
+}
+
+// Sort activities by timestamp (most recent first) and take top 4
+usort($activities, function($a, $b) {
+    return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+});
+$recent_activities = array_slice($activities, 0, 4);
 ?>
 
 <!DOCTYPE html>
@@ -183,6 +278,25 @@ if ($rejected_res) {
 
         .logout-btn:hover {
             background: rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-toggle-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .menu-toggle-btn:hover {
+            background: var(--primary-dark);
         }
 
         /* Main Content Styles */
@@ -506,13 +620,20 @@ if ($rejected_res) {
         }
 
         /* Responsive Design */
-        @media (max-width: 992px) {
+        @media (max-width: 1199px) {
             .activity-section {
                 grid-template-columns: 1fr;
             }
-            
+        }
+        
+        @media (max-width: 992px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                z-index: 1001;
+                position: fixed;
+                top: 0;
+                height: 100vh;
+                transition: transform 0.3s ease;
             }
             
             .main-content {
@@ -522,7 +643,7 @@ if ($rejected_res) {
 
         @media (max-width: 768px) {
             .stats-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
             }
             
             .dashboard-content {
@@ -530,13 +651,34 @@ if ($rejected_res) {
             }
             
             .admin-header {
-                padding: 0 20px;
+                padding: 0 15px;
+                height: 60px;
             }
-        }
-
-        @media (max-width: 576px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                gap: 10px;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
+            }
+            
+            .user-details {
+                display: none;
+            }
+            
+            .welcome-banner {
+                padding: 20px;
             }
             
             .welcome-banner h1 {
@@ -544,7 +686,132 @@ if ($rejected_res) {
             }
             
             .welcome-banner p {
+                font-size: 0.95rem;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                gap: 15px;
+            }
+            
+            .stat-card {
+                padding: 18px;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 15px;
+            }
+            
+            .stat-title {
+                font-size: 0.9rem;
+            }
+            
+            .stat-value {
+                font-size: 1.6rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .view-all {
+                font-size: 0.85rem;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                align-self: flex-start;
+            }
+            
+            .activity-desc {
+                font-size: 0.85rem;
+            }
+            
+            .activity-time {
+                font-size: 0.75rem;
+            }
+            
+            .action-btn {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            .welcome-banner h1 {
+                font-size: 1.3rem;
+            }
+            
+            .welcome-banner p {
+                font-size: 0.85rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .activity-title {
                 font-size: 1rem;
+            }
+            
+            .activity-desc {
+                font-size: 0.8rem;
+            }
+            
+            .action-buttons {
+                gap: 10px;
+            }
+            
+            .action-btn {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            .stat-title {
+                font-size: 0.85rem;
+            }
+            
+            .activity-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .activity-title {
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -668,6 +935,18 @@ if ($rejected_res) {
                         15% from last month
                     </div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-title">Rejected Topics</div>
+                    <div class="stat-value"><?php echo $rejected_count; ?></div>
+                    <div class="stat-trend down">
+                        <i class="fas fa-arrow-down"></i>
+                        5% from last month
+                    </div>
+                </div>
             </div>
 
             <!-- Recent Activity and Quick Actions -->
@@ -679,49 +958,34 @@ if ($rejected_res) {
                     </div>
                     
                     <ul class="activity-list">
-                        <li class="activity-item">
-                            <div class="activity-icon blue">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h3 class="activity-title">New Topic Added</h3>
-                                <p class="activity-desc">"Online Examination System" was added to the database</p>
-                                <span class="activity-time">2 hours ago</span>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon green">
-                                <i class="fas fa-check"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h3 class="activity-title">Topic Accepted</h3>
-                                <p class="activity-desc">"Student Result Management System" status changed to accepted</p>
-                                <span class="activity-time">5 hours ago</span>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon orange">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h3 class="activity-title">New User Registered</h3>
-                                <p class="activity-desc">User "john_doe" registered for the system</p>
-                                <span class="activity-time">1 day ago</span>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon red">
-                                <i class="fas fa-times"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h3 class="activity-title">Topic Rejected</h3>
-                                <p class="activity-desc">"PHP Casino" was rejected due to inappropriate content</p>
-                                <span class="activity-time">2 days ago</span>
-                            </div>
-                        </li>
+                        <?php if (!empty($recent_activities)): ?>
+                            <?php foreach ($recent_activities as $activity): ?>
+                                <li class="activity-item">
+                                    <div class="activity-icon <?php echo $activity['color']; ?>">
+                                        <i class="fas fa-<?php echo $activity['icon']; ?>"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <h3 class="activity-title">
+                                            <?php 
+                                            switch($activity['type']) {
+                                                case 'topic': echo 'Topic ' . ucfirst($activity['action']); break;
+                                                case 'user': echo 'User ' . ucfirst($activity['action']); break;
+                                                case 'contact': echo 'New ' . ucfirst($activity['action']); break;
+                                            }
+                                            ?>
+                                        </h3>
+                                        <p class="activity-desc"><?php echo htmlspecialchars($activity['description']); ?></p>
+                                        <span class="activity-time"><?php echo date('M j, Y g:i A', strtotime($activity['timestamp'])); ?></span>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li class="activity-item">
+                                <div class="activity-content">
+                                    <p class="activity-desc">No recent activity found.</p>
+                                </div>
+                            </li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
@@ -764,6 +1028,77 @@ if ($rejected_res) {
                 card.addEventListener('mouseleave', function() {
                     this.style.transform = 'translateY(0)';
                 });
+            });
+            
+            // Mobile menu toggle functionality
+            const sidebar = document.querySelector('.admin-sidebar');
+            const sidebarMenu = document.querySelector('.sidebar-menu'); // Reference to the menu section
+            let isMobileMenuOpen = false;
+            
+            // Add menu toggle button to header
+            const header = document.querySelector('.admin-header');
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleButton.className = 'menu-toggle-btn';
+            
+            // Add the toggle button to the header
+            const headerTitle = header.querySelector('.header-title');
+            header.insertBefore(toggleButton, headerTitle);
+            
+            // Show toggle button on mobile
+            function checkMobileView() {
+                if (window.innerWidth <= 992) {
+                    toggleButton.style.display = 'flex';
+                    // On mobile, sidebar should be hidden by default
+                    if (!isMobileMenuOpen) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                    sidebar.style.transform = 'translateX(0)'; // Show sidebar on desktop
+                }
+            }
+            
+            // Initial check
+            checkMobileView();
+            
+            // Check on resize
+            window.addEventListener('resize', checkMobileView);
+            
+            // Toggle menu
+            toggleButton.addEventListener('click', function() {
+                isMobileMenuOpen = !isMobileMenuOpen;
+                
+                // Apply transform to the entire sidebar
+                sidebar.style.transform = isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)';
+                
+                // Change icon based on state
+                toggleButton.innerHTML = isMobileMenuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                
+                // Add backdrop when menu is open
+                if (isMobileMenuOpen) {
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'mobile-backdrop';
+                    backdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 1000;
+                        display: block;
+                    `;
+                    
+                    backdrop.addEventListener('click', function() {
+                        isMobileMenuOpen = false;
+                        sidebar.style.transform = 'translateX(-100%)';
+                        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+                        document.body.removeChild(backdrop);
+                    });
+                    
+                    document.body.appendChild(backdrop);
+                }
             });
         });
     </script>

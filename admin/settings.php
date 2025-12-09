@@ -460,10 +460,40 @@ $messages_count = $result->fetch_assoc()['count'];
             border-left: 4px solid #dc2626;
         }
 
+        .menu-toggle-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .menu-toggle-btn:hover {
+            background: var(--primary-dark);
+        }
+
         /* Responsive Design */
+        @media (max-width: 1199px) {
+            .activity-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media (max-width: 992px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                z-index: 1001;
+                position: fixed;
+                top: 0;
+                height: 100vh;
+                transition: transform 0.3s ease;
             }
             
             .main-content {
@@ -481,7 +511,30 @@ $messages_count = $result->fetch_assoc()['count'];
             }
             
             .admin-header {
-                padding: 0 20px;
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                gap: 10px;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
+            }
+            
+            .user-details {
+                display: none;
             }
             
             .page-header {
@@ -493,6 +546,48 @@ $messages_count = $result->fetch_assoc()['count'];
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
             }
+            
+            .form-group label {
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .view-all {
+                font-size: 0.85rem;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                align-self: flex-start;
+            }
+            
+            .activity-desc {
+                font-size: 0.85rem;
+            }
+            
+            .activity-time {
+                font-size: 0.75rem;
+            }
         }
 
         @media (max-width: 576px) {
@@ -502,6 +597,57 @@ $messages_count = $result->fetch_assoc()['count'];
             
             .setting-card {
                 padding: 20px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            .admin-header {
+                padding: 0 10px;
+            }
+            
+            .activity-title {
+                font-size: 1rem;
+            }
+            
+            .activity-desc {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .activity-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .activity-title {
+                font-size: 0.95rem;
+            }
+            
+            .btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -555,7 +701,7 @@ $messages_count = $result->fetch_assoc()['count'];
         <header class="admin-header">
             <div class="header-title">
                 <h1>Settings</h1>
-                <p>Manage your admin account and view system statistics</p>
+                <p>Manage your admin account</p>
             </div>
             
             <div class="user-info">
@@ -669,5 +815,79 @@ $messages_count = $result->fetch_assoc()['count'];
             </div>
         </div>
     </main>
+
+    <script>
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            let isMobileMenuOpen = false;
+            
+            // Add menu toggle button to header
+            const header = document.querySelector('.admin-header');
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleButton.className = 'menu-toggle-btn';
+            
+            // Add the toggle button to the header
+            const headerTitle = header.querySelector('.header-title');
+            header.insertBefore(toggleButton, headerTitle);
+            
+            // Show toggle button on mobile
+            function checkMobileView() {
+                if (window.innerWidth <= 992) {
+                    toggleButton.style.display = 'flex';
+                    // On mobile, sidebar should be hidden by default
+                    if (!isMobileMenuOpen) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                    sidebar.style.transform = 'translateX(0)'; // Show sidebar on desktop
+                }
+            }
+            
+            // Initial check
+            checkMobileView();
+            
+            // Check on resize
+            window.addEventListener('resize', checkMobileView);
+            
+            // Toggle menu
+            toggleButton.addEventListener('click', function() {
+                isMobileMenuOpen = !isMobileMenuOpen;
+                
+                // Apply transform to the entire sidebar
+                sidebar.style.transform = isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)';
+                
+                // Change icon based on state
+                toggleButton.innerHTML = isMobileMenuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                
+                // Add backdrop when menu is open
+                if (isMobileMenuOpen) {
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'mobile-backdrop';
+                    backdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 1000;
+                        display: block;
+                    `;
+                    
+                    backdrop.addEventListener('click', function() {
+                        isMobileMenuOpen = false;
+                        sidebar.style.transform = 'translateX(-100%)';
+                        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+                        document.body.removeChild(backdrop);
+                    });
+                    
+                    document.body.appendChild(backdrop);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

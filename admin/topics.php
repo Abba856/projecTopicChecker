@@ -592,10 +592,53 @@ $result = $stmt->get_result();
             color: var(--gray-800);
         }
 
+        .menu-toggle-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .menu-toggle-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Scrollable Table Container */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -25px;
+            padding: 0 25px;
+        }
+        
+        .table-responsive table {
+            min-width: 600px;
+            width: 100%;
+        }
+
         /* Responsive Design */
+        @media (max-width: 1199px) {
+            .activity-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media (max-width: 992px) {
             .admin-sidebar {
                 transform: translateX(-100%);
+                z-index: 1001;
+                position: fixed;
+                top: 0;
+                height: 100vh;
+                transition: transform 0.3s ease;
             }
             
             .main-content {
@@ -609,6 +652,157 @@ $result = $stmt->get_result();
             
             .form-group {
                 min-width: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                padding: 20px;
+            }
+            
+            .admin-header {
+                padding: 0 15px;
+                height: 60px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .user-info {
+                gap: 10px;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
+            }
+            
+            .user-details {
+                display: none;
+            }
+            
+            .filter-row {
+                gap: 10px;
+            }
+            
+            .form-group label {
+                font-size: 0.9rem;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 12px 10px;
+                font-size: 0.9rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .action-btn {
+                width: 30px;
+                height: 30px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-buttons {
+                width: 100%;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .view-all {
+                font-size: 0.85rem;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                align-self: flex-start;
+            }
+            
+            .activity-desc {
+                font-size: 0.85rem;
+            }
+            
+            .activity-time {
+                font-size: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            .admin-header {
+                padding: 0 10px;
+            }
+            
+            .activity-title {
+                font-size: 1rem;
+            }
+            
+            .activity-desc {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .activity-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .activity-title {
+                font-size: 0.95rem;
+            }
+            
+            .btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
             }
         }
 
@@ -782,59 +976,61 @@ $result = $stmt->get_result();
                 </div>
                 
                 <?php if ($result->num_rows > 0): ?>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Topic Title</th>
-                                <th>Status</th>
-                                <th>Created Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($topic = $result->fetch_assoc()): ?>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td><?php echo $topic['id']; ?></td>
-                                    <td><?php echo htmlspecialchars(substr($topic['topic_title'], 0, 50)) . (strlen($topic['topic_title']) > 50 ? '...' : ''); ?></td>
-                                    <td>
-                                        <span class="status-badge status-<?php echo $topic['status']; ?>">
-                                            <?php 
-                                            switch($topic['status']) {
-                                                case 'available': echo 'Pending'; break;
-                                                case 'taken': echo 'Accepted'; break;
-                                                case 'completed': echo 'Rejected'; break;
-                                                default: echo ucfirst($topic['status']);
-                                            }
-                                            ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo date('M j, Y', strtotime($topic['created_at'])); ?></td>
-                                    <td class="actions">
-                                        <a href="view_topic.php?id=<?php echo $topic['id']; ?>" class="action-btn view-btn" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <?php if ($topic['status'] == 'available'): ?>
-                                            <a href="?action=accept&id=<?php echo $topic['id']; ?>" class="action-btn accept-btn" title="Accept Topic" onclick="return confirm('Are you sure you want to accept this topic?')">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                            <a href="?action=reject&id=<?php echo $topic['id']; ?>" class="action-btn reject-btn" title="Reject Topic" onclick="return confirm('Are you sure you want to reject this topic?')">
-                                                <i class="fas fa-times"></i>
-                                            </a>
-                                        <?php elseif ($topic['status'] == 'taken'): ?>
-                                            <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
-                                                <i class="fas fa-undo"></i>
-                                            </a>
-                                        <?php elseif ($topic['status'] == 'completed'): ?>
-                                            <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
-                                                <i class="fas fa-undo"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
+                                    <th>ID</th>
+                                    <th>Topic Title</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php while ($topic = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo $topic['id']; ?></td>
+                                        <td><?php echo htmlspecialchars(substr($topic['topic_title'], 0, 50)) . (strlen($topic['topic_title']) > 50 ? '...' : ''); ?></td>
+                                        <td>
+                                            <span class="status-badge status-<?php echo $topic['status']; ?>">
+                                                <?php 
+                                                switch($topic['status']) {
+                                                    case 'available': echo 'Pending'; break;
+                                                    case 'taken': echo 'Accepted'; break;
+                                                    case 'completed': echo 'Rejected'; break;
+                                                    default: echo ucfirst($topic['status']);
+                                                }
+                                                ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo date('M j, Y', strtotime($topic['created_at'])); ?></td>
+                                        <td class="actions">
+                                            <a href="view_topic.php?id=<?php echo $topic['id']; ?>" class="action-btn view-btn" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <?php if ($topic['status'] == 'available'): ?>
+                                                <a href="?action=accept&id=<?php echo $topic['id']; ?>" class="action-btn accept-btn" title="Accept Topic" onclick="return confirm('Are you sure you want to accept this topic?')">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="?action=reject&id=<?php echo $topic['id']; ?>" class="action-btn reject-btn" title="Reject Topic" onclick="return confirm('Are you sure you want to reject this topic?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            <?php elseif ($topic['status'] == 'taken'): ?>
+                                                <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
+                                                    <i class="fas fa-undo"></i>
+                                                </a>
+                                            <?php elseif ($topic['status'] == 'completed'): ?>
+                                                <a href="?action=reset&id=<?php echo $topic['id']; ?>" class="action-btn reset-btn" title="Reset Status" onclick="return confirm('Are you sure you want to reset this topic status?')">
+                                                    <i class="fas fa-undo"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                     
                     <!-- Pagination -->
                     <?php if ($totalPages > 1): ?>
@@ -889,5 +1085,79 @@ $result = $stmt->get_result();
             </div>
         </div>
     </main>
+
+    <script>
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            let isMobileMenuOpen = false;
+            
+            // Add menu toggle button to header
+            const header = document.querySelector('.admin-header');
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleButton.className = 'menu-toggle-btn';
+            
+            // Add the toggle button to the header
+            const headerTitle = header.querySelector('.header-title');
+            header.insertBefore(toggleButton, headerTitle);
+            
+            // Show toggle button on mobile
+            function checkMobileView() {
+                if (window.innerWidth <= 992) {
+                    toggleButton.style.display = 'flex';
+                    // On mobile, sidebar should be hidden by default
+                    if (!isMobileMenuOpen) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                    sidebar.style.transform = 'translateX(0)'; // Show sidebar on desktop
+                }
+            }
+            
+            // Initial check
+            checkMobileView();
+            
+            // Check on resize
+            window.addEventListener('resize', checkMobileView);
+            
+            // Toggle menu
+            toggleButton.addEventListener('click', function() {
+                isMobileMenuOpen = !isMobileMenuOpen;
+                
+                // Apply transform to the entire sidebar
+                sidebar.style.transform = isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)';
+                
+                // Change icon based on state
+                toggleButton.innerHTML = isMobileMenuOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                
+                // Add backdrop when menu is open
+                if (isMobileMenuOpen) {
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'mobile-backdrop';
+                    backdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 1000;
+                        display: block;
+                    `;
+                    
+                    backdrop.addEventListener('click', function() {
+                        isMobileMenuOpen = false;
+                        sidebar.style.transform = 'translateX(-100%)';
+                        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+                        document.body.removeChild(backdrop);
+                    });
+                    
+                    document.body.appendChild(backdrop);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
