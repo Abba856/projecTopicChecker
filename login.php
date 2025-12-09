@@ -212,8 +212,12 @@ session_start();
             if(!empty($_SESSION['error'])) {
                 echo '<div class="error-message">';
                 echo '<i class="fas fa-exclamation-circle"></i>';
-                foreach($_SESSION['error'] as $er) {
-                    echo $er . '<br>';
+                if(is_array($_SESSION['error'])) {
+                    foreach($_SESSION['error'] as $er) {
+                        echo $er . '<br>';
+                    }
+                } else {
+                    echo $_SESSION['error'];
                 }
                 echo '</div>';
                 unset($_SESSION['error']);

@@ -2,11 +2,10 @@
 
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "root";
 $database = "project_checker";
-$socket = "/opt/lampp/var/mysql/mysql.sock";
 
-$link = new mysqli($servername, $username, $password, $database, 3306, $socket);
+$link = new mysqli($servername, $username, $password, $database);
 
 // Check connection
 if ($link->connect_error) {

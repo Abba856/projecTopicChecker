@@ -15,16 +15,16 @@ if (!empty($_POST)) {
         include("includes/connection.php");
 
         // Use prepared statement to prevent SQL injection
-        $q = "SELECT * FROM register WHERE r_unm = ? AND r_pwd = ?";
+        $q = "SELECT * FROM register WHERE r_unm = ?";
         $stmt = $link->prepare($q);
-        $stmt->bind_param("ss", $unm, $pwd);
+        $stmt->bind_param("s", $unm);
         $stmt->execute();
         $res = $stmt->get_result();
 
         if ($res) {
             $row = $res->fetch_assoc();
 
-            if (!empty($row)) {
+            if (!empty($row) && password_verify($pwd, $row['r_pwd'])) {
                 $_SESSION['client']['unm'] = $row['r_fnm'];
                 $_SESSION['client']['id'] = $row['r_id'];
                 $_SESSION['client']['status'] = true;
