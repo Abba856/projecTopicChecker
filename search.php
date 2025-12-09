@@ -325,7 +325,7 @@ include("includes/header.php");
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .modern-content {
         width: 100%;
         float: none;
@@ -340,20 +340,139 @@ include("includes/header.php");
     .search-form {
         max-width: 100%;
     }
+    
+    .topic-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    
+    .suggestion-tags {
+        justify-content: center;
+    }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .modern-post {
         padding: 20px;
+    }
+    
+    .modern-title {
+        font-size: 28px;
+    }
+    
+    .search-input {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+    
+    .search-btn {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    .search-results-info {
+        padding: 15px;
+        font-size: 15px;
     }
     
     .topic-card {
         padding: 20px;
     }
     
+    .topic-card h3 {
+        font-size: 18px;
+    }
+    
     .view-details {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .suggestions {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-post {
+        padding: 15px;
+    }
+    
+    .modern-title {
+        font-size: 24px;
+    }
+    
+    .search-header {
+        gap: 15px;
+    }
+    
+    .search-form {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-input {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .search-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .search-results-info {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .topic-card {
+        padding: 15px;
+    }
+    
+    .topic-card h3 {
+        font-size: 16px;
+    }
+    
+    .topic-card .abstract {
+        font-size: 14px;
+    }
+    
+    .view-details {
+        padding: 10px 15px;
+        font-size: 14px;
         width: 100%;
         justify-content: center;
+    }
+    
+    .suggestions {
+        padding: 15px;
+    }
+    
+    .suggestion-tag {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    .back-link a {
+        padding: 10px 15px;
+        font-size: 14px;
+        justify-content: center;
+    }
+    
+    .no-results {
+        padding: 40px 15px;
+    }
+    
+    .no-results i {
+        font-size: 36px;
+    }
+    
+    .no-results h3 {
+        font-size: 20px;
+    }
+    
+    .no-results p {
+        font-size: 14px;
     }
 }
 </style>

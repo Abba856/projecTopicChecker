@@ -238,8 +238,28 @@ body {
     min-width: 0;
 }
 
+/* Mobile Menu Toggle */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.menu-toggle span {
+    height: 3px;
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .logo-section {
         flex-direction: column;
         text-align: center;
@@ -250,57 +270,119 @@ body {
     .nav-container {
         flex-direction: column;
         gap: 15px;
-        padding: 15px 20px;
+        padding: 15px 10px;
     }
     
     .main-menu {
-        flex-wrap: wrap;
-        justify-content: center;
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        flex-direction: column;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        padding: 20px 0;
+    }
+    
+    .main-menu.active {
+        display: flex;
+    }
+    
+    .main-menu li {
+        width: 100%;
     }
     
     .main-menu a {
-        padding: 15px 10px;
-        font-size: 14px;
+        padding: 15px 20px;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .menu-toggle {
+        display: flex;
+        position: absolute;
+        top: 20px;
+        right: 20px;
     }
     
     .user-actions {
-        flex-wrap: wrap;
+        width: 100%;
         justify-content: center;
-    }
-    
-    .modern-search input {
-        width: 180px;
-    }
-    
-    .modern-search input:focus {
-        width: 200px;
-    }
-}
-
-@media (max-width: 480px) {
-    .main-menu a {
-        padding: 12px 8px;
-        font-size: 13px;
-    }
-    
-    .logo-section h1 a {
-        font-size: 24px;
+        flex-wrap: wrap;
     }
     
     .modern-search {
         width: 100%;
+        margin-top: 15px;
         display: flex;
         justify-content: center;
     }
     
     .modern-search input {
         width: 100%;
-        max-width: 200px;
+        max-width: 300px;
     }
     
-    .modern-search input:focus {
+    .logo-section h1 a {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 0 15px;
+        margin: 20px auto;
+        gap: 20px;
+    }
+    
+    .logo-section h1 a {
+        font-size: 24px;
+    }
+    
+    .logo-section h2 {
+        font-size: 14px;
+    }
+    
+    .main-menu a {
+        font-size: 16px;
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-section {
+        padding: 10px 15px;
+    }
+    
+    .logo-section h1 a {
+        font-size: 22px;
+    }
+    
+    .logo-section h2 {
+        font-size: 12px;
+    }
+    
+    .main-menu a {
+        font-size: 15px;
+        padding: 12px 15px;
+    }
+    
+    .user-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .user-greeting, .login-btn, .register-btn {
         width: 100%;
-        max-width: 220px;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .page-container {
+        padding: 0 10px;
+        margin: 15px auto;
+        gap: 15px;
     }
 }
 </style>
@@ -318,6 +400,11 @@ body {
     
     <nav class="navigation">
         <div class="nav-container">
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
             <ul class="main-menu">
                 <li><a href="index.php" class="first">Home</a></li>
                 
@@ -338,6 +425,10 @@ body {
                         echo '<i class="fas fa-user-circle"></i>';
                         echo 'Hi, ' . htmlspecialchars($_SESSION['client']['unm']);
                         echo '</div>';
+                        echo '<a href="logout.php" class="logout-btn">';
+                        echo '<i class="fas fa-sign-out-alt"></i>';
+                        echo 'Logout';
+                        echo '</a>';
                     } else {
                         echo '<a href="login.php" class="login-btn">';
                         echo '<i class="fas fa-sign-in-alt"></i>';
@@ -359,5 +450,33 @@ body {
             </div>
         </div>
     </nav>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mainMenu = document.querySelector('.main-menu');
+            
+            mobileMenu.addEventListener('click', function() {
+                mainMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking on a link
+            const menuLinks = document.querySelectorAll('.main-menu a');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 992) {
+                        mainMenu.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Close menu when resizing to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 992) {
+                    mainMenu.classList.remove('active');
+                }
+            });
+        });
+    </script>
     
     <div class="page-container">

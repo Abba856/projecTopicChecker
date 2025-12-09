@@ -229,7 +229,7 @@ include("includes/header.php");
 }
 
 /* Responsive adjustments */
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
     .topic-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -237,6 +237,10 @@ include("includes/header.php");
     .stats-container {
         flex-direction: column;
         gap: 15px;
+    }
+    
+    .featured-section {
+        padding: 25px;
     }
 }
 
@@ -252,6 +256,31 @@ include("includes/header.php");
     .modern-title {
         font-size: 30px;
     }
+    
+    .modern-subtitle {
+        font-size: 16px;
+    }
+    
+    .stat-number {
+        font-size: 26px;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+    }
+    
+    .featured-title {
+        font-size: 22px;
+    }
+    
+    .featured-text {
+        font-size: 16px;
+    }
+    
+    .load-more-btn {
+        padding: 12px 25px;
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -261,6 +290,51 @@ include("includes/header.php");
     
     .topic-card {
         padding: 20px 15px;
+    }
+    
+    .modern-post {
+        padding: 20px;
+    }
+    
+    .modern-title {
+        font-size: 26px;
+    }
+    
+    .topic-card h3 {
+        font-size: 16px;
+    }
+    
+    .stat-item {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 22px;
+    }
+    
+    .featured-title {
+        font-size: 20px;
+    }
+    
+    .featured-text {
+        font-size: 15px;
+    }
+    
+    .load-more-btn {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    .btn-primary {
+        padding: 12px 20px;
+        font-size: 15px;
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .btn-primary:last-child {
+        margin-bottom: 0;
     }
 }
 </style>

@@ -319,10 +319,10 @@ session_start();
                 </div>
                 
                 <div class="form-group">
-                    <label for="unm">Username</label>
+                    <label for="unm">Registration Number</label>
                     <div class="input-with-icon">
                         <i class="fas fa-at input-icon"></i>
-                        <input type="text" id="unm" name="unm" class="form-control" placeholder="Choose a username" required>
+                        <input type="text" id="unm" name="unm" class="form-control" placeholder="Enter your Registration Number" required>
                     </div>
                     <?php
                         if(isset($_SESSION['error']['unm'])) {

@@ -303,7 +303,7 @@ if ($bid > 0) {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .modern-content {
         width: 100%;
         float: none;
@@ -327,7 +327,7 @@ if ($bid > 0) {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .modern-post {
         padding: 20px;
     }
@@ -338,6 +338,47 @@ if ($bid > 0) {
     
     .topic-section {
         padding: 20px;
+    }
+    
+    .related-topics h3 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-post {
+        padding: 15px;
+    }
+    
+    .topic-title {
+        font-size: 22px;
+    }
+    
+    .topic-section {
+        padding: 15px;
+    }
+    
+    .topic-abstract p {
+        font-size: 15px;
+    }
+    
+    .meta-item {
+        padding: 15px;
+    }
+    
+    .actions {
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .back-link a {
+        padding: 10px 15px;
+        font-size: 14px;
+        justify-content: center;
     }
 }
 </style>

@@ -222,10 +222,10 @@ session_start();
             
             <form action="login_process.php" method="post">
                 <div class="form-group">
-                    <label for="unm">Username</label>
+                    <label for="unm">Registration Number</label>
                     <div class="input-with-icon">
                         <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="unm" name="unm" class="form-control" placeholder="Enter your username" required autofocus>
+                        <input type="text" id="unm" name="unm" class="form-control" placeholder="Enter your Registration Number" required autofocus>
                     </div>
                 </div>
                 

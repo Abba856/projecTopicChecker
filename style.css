@@ -596,6 +596,183 @@ a img {
 }
 
 
+/* Responsive Design for Mobile Devices */
+@media screen and (max-width: 992px) {
+	/* Header adjustments */
+	#header {
+		width: 100%;
+		padding: 0 10px;
+	}
+	
+	/* Menu adjustments */
+	#menu {
+		width: 100%;
+	}
+	
+	#menu a {
+		padding: 13px 12px 0px 12px;
+		font-size: 12px;
+	}
+	
+	#search {
+		display: none; /* Hide search on smaller screens to save space */
+	}
+	
+	/* Page adjustments */
+	#page {
+		width: 100%;
+		padding: 20px 10px 0px 10px; /* Reduced padding */
+	}
+	
+	/* Logo adjustments */
+	#logo {
+		width: 100%;
+		padding: 0 10px;
+	}
+	
+	#logo h1 {
+		font-size: 32px;
+		padding-top: 15px;
+	}
+	
+	/* Content and sidebar adjustments */
+	#content {
+		float: none; /* Stack content and sidebar on mobile */
+		width: 100%;
+	}
+	
+	#sidebar {
+		float: none;
+		width: 100%;
+		margin-top: 20px;
+	}
+	
+	/* Book list adjustments */
+	.book_box {
+		float: none;
+		width: 100%;
+		margin-right: 0;
+		margin-bottom: 20px;
+		box-sizing: border-box;
+	}
+	
+	.book_box:nth-of-type(3n + 3) {
+		margin-right: 0;
+	}
+	
+	/* Form and input adjustments */
+	.txt {
+		width: 100%;
+		padding: 8px 10px;
+		box-sizing: border-box;
+	}
+	
+	.btn {
+		padding: 10px 15px;
+		font-size: 15px;
+		width: 100%;
+		text-align: center;
+		margin-bottom: 10px;
+		box-sizing: border-box;
+	}
+	
+	/* Responsive table adjustments */
+	.cart {
+		display: block;
+		overflow-x: auto;
+	}
+	
+	.cart tr, .cart td {
+		display: table;
+	}
+}
+
+@media screen and (max-width: 768px) {
+	#header {
+		width: 100%;
+		padding: 0 10px;
+	}
+	
+	#menu {
+		width: 100%;
+	}
+	
+	#menu a {
+		padding: 12px 10px 0px 10px;
+		font-size: 11px;
+	}
+	
+	#logo h1 {
+		font-size: 28px;
+		padding-top: 10px;
+	}
+	
+	h1 {
+		font-size: 26px;
+	}
+	
+	h2 {
+		font-size: 15px;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	#header {
+		height: auto;
+		padding: 10px 5px;
+	}
+	
+	#menu {
+		height: auto;
+	}
+	
+	#menu a {
+		padding: 10px 8px;
+		font-size: 10px;
+	}
+	
+	#logo h1 {
+		font-size: 24px;
+		padding-top: 10px;
+	}
+	
+	h1 {
+		font-size: 24px;
+	}
+	
+	h2 {
+		font-size: 14px;
+	}
+	
+	.modern-post {
+		padding: 15px;
+	}
+	
+	.txt {
+		padding: 8px;
+		font-size: 14px;
+	}
+	
+	.btn {
+		padding: 9px 12px;
+		font-size: 14px;
+	}
+	
+	.book_box {
+		padding: 12px;
+	}
+	
+	.book_box h2 {
+		font-size: 16px;
+	}
+	
+	.cart tr th, .cart tr td {
+		padding: 6px;
+		font-size: 13px;
+	}
+}
+
+
 
 
 
@@ -609,9 +786,11 @@ a img {
 	font-family: open sans;
 	border-top: 1px solid #c8c8c8;
 	border-left: 1px solid #c8c8c8;
+	width: 100%;
+	overflow-x: auto; /* Allow horizontal scroll on small screens */
 }
 
-.cart tr td, tr th
+.cart tr, .cart td, .cart th
 {
 	text-align: center;
 	border-right: 1px solid #c8c8c8;
@@ -624,6 +803,48 @@ a img {
 	background-color: #f3f3f3;
 	padding: 8px;
 	color: black;
+}
+
+/* Mobile-specific cart styles */
+@media screen and (max-width: 768px) {
+	.cart {
+		display: block;
+	}
+	
+	.cart thead {
+		display: none;
+	}
+	
+	.cart tr {
+		display: block;
+		border-bottom: 3px solid #ddd;
+		margin-bottom: 10px;
+		padding-bottom: 10px;
+	}
+	
+	.cart tr:last-child {
+		border-bottom: none;
+	}
+	
+	.cart td {
+		display: block;
+		border: none;
+		border-bottom: 1px solid #eee;
+		padding: 8px;
+		text-align: left;
+	}
+	
+	.cart td:last-child {
+		border-bottom: none;
+	}
+	
+	.cart td:before {
+		content: attr(data-label);
+		float: left;
+		font-weight: bold;
+		text-transform: uppercase;
+		font-size: 11px;
+	}
 }
 
 .btn_refresh

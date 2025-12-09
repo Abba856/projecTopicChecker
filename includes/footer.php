@@ -690,6 +690,10 @@
     .sidebar-content-wrapper {
         padding: 0 15px;
     }
+    
+    .topic-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
@@ -702,6 +706,39 @@
     .footer-section h4 {
         font-size: 24px;
     }
+    
+    .sidebar-widget {
+        padding: 25px;
+    }
+    
+    .widget-title {
+        font-size: 22px;
+        padding-bottom: 12px;
+    }
+    
+    .recent-title {
+        font-size: 16px;
+    }
+    
+    .recent-meta {
+        flex-direction: column;
+        gap: 5px;
+        align-items: flex-start;
+    }
+    
+    .newsletter-form {
+        gap: 10px;
+    }
+    
+    .form-group input {
+        padding: 12px 15px;
+        font-size: 15px;
+    }
+    
+    .subscribe-btn {
+        padding: 12px 18px;
+        font-size: 15px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -710,31 +747,57 @@
         gap: 10px;
     }
     
+    .sidebar-widget {
+        padding: 20px;
+    }
+    
     .recent-link {
-        padding: 15px;
+        padding: 12px;
     }
     
     .recent-title {
-        font-size: 16px;
+        font-size: 15px;
     }
     
     .footer-section h3,
     .footer-section h4 {
-        font-size: 22px;
+        font-size: 20px;
     }
     
     .footer-section ul li a {
-        font-size: 15px;
+        font-size: 14px;
+        padding: 4px 0;
+    }
+    
+    .social-links {
+        justify-content: center;
     }
     
     .social-links a {
-        width: 45px;
-        height: 45px;
-        font-size: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
     }
     
     .footer-bottom-content p {
+        font-size: 13px;
+    }
+    
+    .user-name {
+        font-size: 18px;
+    }
+    
+    .sidebar-logout-btn {
+        padding: 12px 18px;
         font-size: 14px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .stat-label {
+        font-size: 13px;
     }
 }
 </style>

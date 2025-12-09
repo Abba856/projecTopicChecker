@@ -261,18 +261,90 @@ textarea.form-control {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .modern-content {
         width: 100%;
         float: none;
     }
     
     .modern-post {
-        padding: 20px;
+        padding: 25px;
     }
     
     .modern-title {
         font-size: 28px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-post {
+        padding: 20px;
+    }
+    
+    .modern-title {
+        font-size: 26px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-control {
+        padding: 12px;
+        font-size: 15px;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+    }
+    
+    .btn-primary {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    .alert {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-post {
+        padding: 15px;
+    }
+    
+    .modern-title {
+        font-size: 24px;
+    }
+    
+    .form-control {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+    
+    .btn-primary {
+        padding: 10px 15px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .alert {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .similarity-suggestions {
+        padding: 12px;
+    }
+    
+    .similarity-suggestion {
+        padding: 8px;
     }
 }
 </style>

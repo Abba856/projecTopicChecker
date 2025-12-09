@@ -356,7 +356,7 @@ tr:hover td {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .modern-content {
         width: 100%;
         float: none;
@@ -369,6 +369,14 @@ tr:hover td {
     
     .form-group {
         min-width: auto;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    table {
+        min-width: 600px;
     }
     
     th, td {
@@ -384,6 +392,109 @@ tr:hover td {
     .action-btn {
         width: 30px;
         height: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-post {
+        padding: 20px;
+    }
+    
+    .modern-title {
+        font-size: 28px;
+    }
+    
+    .filters-section {
+        padding: 20px;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    th, td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-post {
+        padding: 15px;
+    }
+    
+    .modern-title {
+        font-size: 24px;
+    }
+    
+    .filters-section {
+        padding: 15px;
+    }
+    
+    .filter-row {
+        gap: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    .form-control {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    th, td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .pagination {
+        gap: 5px;
+    }
+    
+    .pagination a, .pagination span {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .empty-state {
+        padding: 30px 15px;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.2rem;
     }
 }
 </style>
