@@ -1,0 +1,29 @@
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs and local env files
+*.log
+.env
+.env.*
+!.env.example
+
+# Node dependencies/build outputs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PHP/composer artifacts
+vendor/
+composer.phar
+
+# Local runtime/cache/uploads
+cache/
+tmp/
+uploads/
+
